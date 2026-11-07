@@ -31,6 +31,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LOCALE_ID } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeEsPy from '@angular/common/locales/es-PY';
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { PaginatorIntlEs } from './core/paginator-intl';
 
 // Dates and numbers in Spanish (Paraguay)
 registerLocaleData(localeEsPy);
@@ -58,5 +60,7 @@ export const appConfig: ApplicationConfig = {
       TablerIconsModule.pick(TablerIcons),
       NgScrollbarModule,
     ),
+    // Must come after MaterialModule: MatPaginatorModule registers its own default (English) labels.
+    { provide: MatPaginatorIntl, useClass: PaginatorIntlEs },
   ],
 };

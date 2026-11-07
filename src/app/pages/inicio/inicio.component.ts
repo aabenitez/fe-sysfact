@@ -1,11 +1,12 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { MaterialModule } from '../../material.module';
 import { API_URL } from '../../core/api.config';
 import { AuthService } from '../../core/auth/auth.service';
+import { formatGs } from '../../core/format';
 
 interface Venta {
   id: number;
@@ -21,12 +22,14 @@ interface Kpi {
   icon: string;
   tone: 'primary' | 'success' | 'warning' | 'info';
   hint: string;
+  /** Page the card opens when clicked (only for sections that already exist). */
+  route?: string;
 }
 
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [MaterialModule, RouterModule, DatePipe],
+  imports: [MaterialModule, RouterModule, DatePipe, NgTemplateOutlet],
   templateUrl: './inicio.component.html',
   styleUrls: ['./inicio.component.scss'],
 })
@@ -46,12 +49,6 @@ export class InicioComponent implements OnInit {
     return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
   });
 
-  private readonly gs = new Intl.NumberFormat('es-PY', {
-    style: 'currency',
-    currency: 'PYG',
-    maximumFractionDigits: 0,
-  });
-
   ngOnInit(): void {
     const get = <T>(path: string) =>
       this.http.get<T[]>(`${API_URL}/${path}`).pipe(catchError(() => of(null)));
@@ -69,7 +66,7 @@ export class InicioComponent implements OnInit {
       this.kpis.set([
         { label: 'Ventas', value: r.ventas?.length ?? null, icon: 'solar:cart-large-2-line-duotone', tone: 'primary', hint: 'facturas emitidas' },
         { label: 'Clientes', value: r.clientes?.length ?? null, icon: 'solar:users-group-rounded-line-duotone', tone: 'success', hint: 'registrados' },
-        { label: 'Artículos', value: r.articulos?.length ?? null, icon: 'solar:box-line-duotone', tone: 'warning', hint: 'en catálogo' },
+        { label: 'Artículos', value: r.articulos?.length ?? null, icon: 'solar:box-line-duotone', tone: 'warning', hint: 'en catálogo', route: '/articulos' },
         { label: 'Unidades de medida', value: r.unidades?.length ?? null, icon: 'solar:ruler-line-duotone', tone: 'info', hint: 'configuradas' },
       ]);
       this.loading.set(false);
@@ -77,7 +74,7 @@ export class InicioComponent implements OnInit {
   }
 
   money(value: number): string {
-    return this.gs.format(value ?? 0);
+    return formatGs(value);
   }
 
   condicion(c: string): string {

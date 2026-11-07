@@ -10,6 +10,11 @@ export const navItems: NavItem[] = [
     route: '/inicio',
   },
   {
+    displayName: 'Artículos',
+    iconName: 'solar:box-line-duotone',
+    route: '/articulos',
+  },
+  {
     navCap: 'Plantilla MatDash',
     divider: true,
   },

@@ -103,7 +103,50 @@ $border: #e0e6eb;
 }
 
 .kpi {
+  height: 100%;
   margin-bottom: 0 !important;
+}
+
+.kpi-anchor {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 18px;
+
+  &:focus-visible {
+    outline: 3px solid rgba(99, 91, 255, 0.45);
+    outline-offset: 2px;
+  }
+}
+
+.kpi--clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(17, 28, 45, 0.1) !important;
+  }
+  &:hover .kpi-link {
+    color: $primary;
+    gap: 8px;
+  }
+}
+
+.kpi-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.kpi-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: $muted;
+  transition: color 0.15s ease, gap 0.15s ease;
 }
 
 .kpi-icon {

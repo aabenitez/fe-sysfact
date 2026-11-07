@@ -41,15 +41,39 @@
   }
   } @else {
   @for (k of kpis(); track k.label) {
-  <mat-card class="cardWithShadow kpi">
+  <ng-template #kpiBody>
     <mat-card-content>
-      <div class="kpi-icon kpi-icon--{{ k.tone }}">
-        <i class="iconify" [attr.data-icon]="k.icon"></i>
+      <div class="kpi-top">
+        <div class="kpi-icon kpi-icon--{{ k.tone }}">
+          <i class="iconify" [attr.data-icon]="k.icon"></i>
+        </div>
+        @if (k.route) {
+        <span class="kpi-link">
+          Ver todos
+          <i class="iconify" data-icon="solar:arrow-right-line-duotone"></i>
+        </span>
+        }
       </div>
       <div class="kpi-value">{{ k.value ?? '—' }}</div>
       <div class="kpi-label">{{ k.label }} <span>{{ k.hint }}</span></div>
     </mat-card-content>
+  </ng-template>
+
+  @if (k.route) {
+  <a
+    class="kpi-anchor"
+    [routerLink]="k.route"
+    [attr.aria-label]="'Ver ' + k.label.toLowerCase()"
+  >
+    <mat-card class="cardWithShadow kpi kpi--clickable">
+      <ng-container [ngTemplateOutlet]="kpiBody"></ng-container>
+    </mat-card>
+  </a>
+  } @else {
+  <mat-card class="cardWithShadow kpi">
+    <ng-container [ngTemplateOutlet]="kpiBody"></ng-container>
   </mat-card>
+  }
   }
   }
 </section>

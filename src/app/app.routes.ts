@@ -20,6 +20,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/inicio/inicio.component').then((m) => m.InicioComponent),
       },
+      {
+        path: 'articulos',
+        title: 'Artículos · Sysfact',
+        loadComponent: () =>
+          import('./pages/articulos/articulos.component').then((m) => m.ArticulosComponent),
+      },
       // MatDash template demo pages (kept as a visual reference)
       {
         path: 'dashboard',

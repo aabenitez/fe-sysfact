@@ -1,0 +1,236 @@
+$primary: #635bff;
+$ink: #111c2d;
+$muted: #707a82;
+$border: #e0e6eb;
+
+:host {
+  display: block;
+}
+
+/* ---------------- Header ---------------- */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    color: $ink;
+    letter-spacing: -0.3px;
+  }
+  p {
+    margin: 4px 0 0;
+    color: $muted;
+  }
+  button {
+    border-radius: 10px !important;
+  }
+}
+
+/* ---------------- Summary ---------------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(17, 28, 45, 0.06);
+}
+
+.stat-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 24px;
+  color: $primary;
+  background: #eeedff;
+
+  &--green { color: #0f9d58; background: #e6f7ee; }
+  &--amber { color: #c27803; background: #fff5e0; }
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: $ink;
+}
+.stat-label {
+  font-size: 13px;
+  color: $muted;
+}
+
+/* ---------------- Filters ---------------- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .search {
+    flex: 1 1 320px;
+  }
+  .unit {
+    flex: 0 0 220px;
+  }
+}
+
+.field-icon {
+  font-size: 20px;
+  margin: 0 8px 0 12px;
+  color: $muted;
+}
+
+.result-info {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: $muted;
+}
+
+/* ---------------- Table ---------------- */
+.table-wrap {
+  overflow-x: auto;
+}
+
+.articulos-table {
+  width: 100%;
+  background: transparent;
+
+  th.mat-mdc-header-cell {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: $muted;
+  }
+  td.mat-mdc-cell {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    color: $ink;
+  }
+  tr.mat-mdc-row:hover {
+    background: #f8faff;
+  }
+  .num {
+    text-align: right;
+  }
+}
+
+// mat-sort-header aligns its content to the left; push the price header right.
+::ng-deep .articulos-table th.num .mat-sort-header-container {
+  justify-content: flex-end;
+}
+
+.product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.product-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-weight: 700;
+  color: $primary;
+  background: #eeedff;
+}
+
+.product-name {
+  font-weight: 600;
+}
+.product-desc {
+  font-size: 12.5px;
+  color: $muted;
+}
+
+.pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0b7ab8;
+  background: #e5f4fc;
+}
+
+.price {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.no-match {
+  padding: 32px 16px !important;
+  text-align: center;
+  color: $muted;
+}
+
+/* ---------------- States ---------------- */
+.state {
+  padding: 48px 16px;
+  text-align: center;
+
+  h3 {
+    margin: 12px 0 4px;
+    font-size: 17px;
+    font-weight: 700;
+    color: $ink;
+  }
+  p {
+    margin: 0 0 16px;
+    color: $muted;
+  }
+}
+
+.state-icon {
+  font-size: 44px;
+  color: $muted;
+  &--error {
+    color: #d92d20;
+  }
+}
+
+.skeleton-row {
+  height: 52px;
+  margin-top: 10px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eef1f5 25%, #f6f8fb 50%, #eef1f5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite linear;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 991px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 575px) {
+  .filters .unit {
+    flex: 1 1 100%;
+  }
+}
