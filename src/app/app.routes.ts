@@ -26,6 +26,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/articulos/articulos.component').then((m) => m.ArticulosComponent),
       },
+      {
+        path: 'parametros',
+        title: 'Parámetros · Sysfact',
+        loadComponent: () =>
+          import('./pages/parametros/parametros.component').then((m) => m.ParametrosComponent),
+      },
       // MatDash template demo pages (kept as a visual reference)
       {
         path: 'dashboard',

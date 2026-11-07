@@ -1,0 +1,160 @@
+<!-- Header -->
+<div class="page-head">
+  <div>
+    <h1>Parámetros</h1>
+    <p>Valores de configuración que usa el sistema (correo, rutas, enlaces).</p>
+  </div>
+  <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+    Actualizar
+  </button>
+</div>
+
+<!-- Summary -->
+<div class="stats">
+  <div class="stat">
+    <span class="stat-icon"><i class="iconify" data-icon="solar:settings-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() ? '—' : parametros().length }}</div>
+      <div class="stat-label">Parámetros registrados</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--green"><i class="iconify" data-icon="solar:check-circle-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">
+        {{ loading() ? '—' : activos() }}
+        @if (!loading() && inactivos() > 0) {
+        <small>· {{ inactivos() }} inactivos</small>
+        }
+      </div>
+      <div class="stat-label">Activos</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--amber"><i class="iconify" data-icon="solar:lock-keyhole-minimalistic-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() ? '—' : sensibles() }}</div>
+      <div class="stat-label">Con valor oculto</div>
+    </div>
+  </div>
+</div>
+
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <!-- Filters -->
+    <div class="filters">
+      <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+        <i matPrefix class="iconify field-icon" data-icon="solar:magnifer-line-duotone"></i>
+        <input
+          matInput
+          placeholder="Buscar por código, descripción o valor…"
+          [(ngModel)]="search"
+          (ngModelChange)="applyFilter()"
+          aria-label="Buscar parámetros"
+        />
+        @if (search) {
+        <button mat-icon-button matSuffix (click)="search = ''; applyFilter()" aria-label="Borrar búsqueda">
+          <mat-icon>close</mat-icon>
+        </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="estado" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="estado" (ngModelChange)="applyFilter()" aria-label="Filtrar por estado">
+          <mat-option value="">Todos los estados</mat-option>
+          <mat-option value="activos">Activos</mat-option>
+          <mat-option value="inactivos">Inactivos</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    @for (i of [1, 2, 3, 4]; track i) {
+    <div class="skeleton-row"></div>
+    }
+    } @else if (error()) {
+    <div class="state">
+      <i class="iconify state-icon state-icon--error" data-icon="solar:danger-triangle-line-duotone"></i>
+      <h3>No se pudieron cargar los parámetros</h3>
+      <p>{{ error() }}</p>
+      <button mat-flat-button color="primary" (click)="cargar()">Reintentar</button>
+    </div>
+    } @else if (parametros().length === 0) {
+    <div class="state">
+      <i class="iconify state-icon" data-icon="solar:settings-minimalistic-line-duotone"></i>
+      <h3>Todavía no hay parámetros</h3>
+      <p>Cuando se carguen parámetros en el sistema, van a aparecer acá.</p>
+    </div>
+    } @else {
+    <div class="result-info">
+      Mostrando <strong>{{ visibles() }}</strong> de {{ parametros().length }} parámetros
+    </div>
+
+    <div class="table-wrap">
+      <table mat-table [dataSource]="dataSource" matSort matSortActive="codigo" matSortDirection="asc" class="parametros-table">
+        <ng-container matColumnDef="codigo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Código</th>
+          <td mat-cell *matCellDef="let p">
+            <code class="code">{{ p.codigo }}</code>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="descripcion">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Descripción</th>
+          <td mat-cell *matCellDef="let p" class="desc">{{ p.descripcion }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="valor">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Valor</th>
+          <td mat-cell *matCellDef="let p">
+            <div class="value">
+              @if (isSensitive(p) && !isRevealed(p)) {
+              <span class="value-text value-text--hidden" aria-label="Valor oculto">••••••••••</span>
+              } @else {
+              <span class="value-text" [class.value-text--mono]="isUrlOrPath(p.valor)" [title]="p.valor">{{ p.valor }}</span>
+              }
+              @if (isSensitive(p)) {
+              <button
+                mat-icon-button
+                class="reveal"
+                (click)="toggleReveal(p)"
+                [attr.aria-label]="isRevealed(p) ? 'Ocultar valor' : 'Mostrar valor'"
+                [matTooltip]="isRevealed(p) ? 'Ocultar' : 'Mostrar'"
+              >
+                <i class="iconify" [attr.data-icon]="isRevealed(p) ? 'solar:eye-closed-line-duotone' : 'solar:eye-line-duotone'"></i>
+              </button>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="activo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+          <td mat-cell *matCellDef="let p">
+            <span class="pill" [class.pill--off]="!isActivo(p)">{{ isActivo(p) ? 'Activo' : 'Inactivo' }}</span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns" [class.row--off]="!isActivo(row)"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-match" [attr.colspan]="columns.length">
+            Ningún parámetro coincide con la búsqueda.
+            <button mat-button color="primary" (click)="limpiar()">Limpiar filtros</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [pageSizeOptions]="[10, 25, 50]"
+      [pageSize]="10"
+      showFirstLastButtons
+      aria-label="Paginación de parámetros"
+    ></mat-paginator>
+    }
+  </mat-card-content>
+</mat-card>

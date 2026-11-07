@@ -15,6 +15,11 @@ export const navItems: NavItem[] = [
     route: '/articulos',
   },
   {
+    displayName: 'Parámetros',
+    iconName: 'solar:settings-line-duotone',
+    route: '/parametros',
+  },
+  {
     navCap: 'Plantilla MatDash',
     divider: true,
   },

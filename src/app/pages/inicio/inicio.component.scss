@@ -97,8 +97,8 @@ $border: #e0e6eb;
 /* ---------------- KPIs ---------------- */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 20px;
   margin-bottom: 24px;
 }
 
@@ -161,6 +161,7 @@ $border: #e0e6eb;
   &--success { color: #0f9d58; background: #e6f7ee; }
   &--warning { color: #c27803; background: #fff5e0; }
   &--info    { color: #0b7ab8; background: #e5f4fc; }
+  &--neutral { color: #4b5563; background: #eef1f5; }
 }
 
 .kpi-value {
@@ -315,7 +316,13 @@ $border: #e0e6eb;
 }
 
 /* ---------------- Responsive ---------------- */
-@media (max-width: 1199px) {
+@media (max-width: 1399px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 991px) {
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
