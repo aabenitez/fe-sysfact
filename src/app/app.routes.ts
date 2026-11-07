@@ -1,17 +1,26 @@
 import { Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
+import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
     component: FullComponent,
+    canActivate: [authGuard],
     children: [
       {
         path: '',
-        redirectTo: '/dashboard',
+        redirectTo: '/inicio',
         pathMatch: 'full',
       },
+      {
+        path: 'inicio',
+        title: 'Inicio · Sysfact',
+        loadComponent: () =>
+          import('./pages/inicio/inicio.component').then((m) => m.InicioComponent),
+      },
+      // MatDash template demo pages (kept as a visual reference)
       {
         path: 'dashboard',
         loadChildren: () =>
@@ -46,6 +55,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'authentication/error',
+    redirectTo: '',
   },
 ];

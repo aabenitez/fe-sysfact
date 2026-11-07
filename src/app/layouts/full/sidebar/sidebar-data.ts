@@ -2,7 +2,16 @@ import { NavItem } from './nav-item/nav-item';
 
 export const navItems: NavItem[] = [
   {
-    navCap: 'Home',
+    navCap: 'Sysfact',
+  },
+  {
+    displayName: 'Inicio',
+    iconName: 'solar:home-smile-line-duotone',
+    route: '/inicio',
+  },
+  {
+    navCap: 'Plantilla MatDash',
+    divider: true,
   },
   {
     displayName: 'Dashboard',

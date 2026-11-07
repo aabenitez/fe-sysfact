@@ -1,0 +1,117 @@
+<!-- Welcome -->
+<section class="hero">
+  <div class="hero-text">
+    <span class="hero-date">{{ today | date: "EEEE d 'de' MMMM, y" }}</span>
+    <h1>{{ greeting() }}, {{ auth.user()?.nombres }} 👋</h1>
+    <p>Este es el resumen de tu negocio hoy.</p>
+  </div>
+  <div class="hero-side">
+    <div class="hero-total">
+      <span>Total facturado</span>
+      @if (loading()) {
+      <strong class="skeleton skeleton--text"></strong>
+      } @else {
+      <strong>{{ money(totalVendido()) }}</strong>
+      }
+    </div>
+    <span class="role-chip">
+      <i class="iconify" data-icon="solar:shield-user-line-duotone"></i>
+      {{ auth.user()?.rol?.nombre }}
+    </span>
+  </div>
+</section>
+
+@if (loadError()) {
+<div class="notice-error" role="alert">
+  <i class="iconify" data-icon="solar:danger-triangle-line-duotone"></i>
+  No se pudieron cargar los datos del servidor. Revisá que el backend esté levantado.
+</div>
+}
+
+<!-- KPIs -->
+<section class="kpi-grid">
+  @if (loading()) {
+  @for (i of [1, 2, 3, 4]; track i) {
+  <mat-card class="cardWithShadow kpi">
+    <mat-card-content>
+      <div class="skeleton skeleton--icon"></div>
+      <div class="skeleton skeleton--text m-t-16"></div>
+    </mat-card-content>
+  </mat-card>
+  }
+  } @else {
+  @for (k of kpis(); track k.label) {
+  <mat-card class="cardWithShadow kpi">
+    <mat-card-content>
+      <div class="kpi-icon kpi-icon--{{ k.tone }}">
+        <i class="iconify" [attr.data-icon]="k.icon"></i>
+      </div>
+      <div class="kpi-value">{{ k.value ?? '—' }}</div>
+      <div class="kpi-label">{{ k.label }} <span>{{ k.hint }}</span></div>
+    </mat-card-content>
+  </mat-card>
+  }
+  }
+</section>
+
+<!-- Latest sales -->
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <div class="section-head">
+      <div>
+        <h2>Últimas ventas</h2>
+        <p>Las 5 facturas más recientes</p>
+      </div>
+    </div>
+
+    @if (loading()) {
+    @for (i of [1, 2, 3]; track i) {
+    <div class="skeleton skeleton--row"></div>
+    }
+    } @else if (ventas().length === 0) {
+    <div class="empty">
+      <i class="iconify" data-icon="solar:document-text-line-duotone"></i>
+      <p>Todavía no hay ventas registradas.</p>
+    </div>
+    } @else {
+    <div class="table-wrap">
+      <table class="sales-table">
+        <thead>
+          <tr>
+            <th>N.º</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Condición</th>
+            <th class="num">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of ventas(); track v.id) {
+          <tr>
+            <td class="muted">#{{ v.id }}</td>
+            <td>{{ v.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <div class="client">
+                <span class="avatar">{{ clienteNombre(v).charAt(0) }}</span>
+                <div>
+                  <div class="client-name">{{ clienteNombre(v) }}</div>
+                  @if (v.cliente?.ciRuc) {
+                  <div class="muted small">CI/RUC {{ v.cliente?.ciRuc }}</div>
+                  }
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="pill" [class.pill--credit]="v.condicionVenta === 'CRE'">
+                {{ condicion(v.condicionVenta) }}
+              </span>
+            </td>
+            <td class="num strong">{{ money(v.totalFactura) }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+  </mat-card-content>
+</mat-card>
