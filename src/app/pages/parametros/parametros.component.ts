@@ -7,6 +7,8 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MaterialModule } from '../../material.module';
 import { Parametro } from '../../core/models/parametro.model';
 import { ParametroService } from '../../core/services/parametro.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { BrandingService, LOGO_ACCEPT } from '../../core/branding/branding.service';
 
 type Estado = '' | 'activos' | 'inactivos';
 
@@ -22,6 +24,13 @@ const SENSITIVE = /(password|pass|secret|token|clave|key)/i;
 })
 export class ParametrosComponent implements OnInit {
   private readonly service = inject(ParametroService);
+  private readonly auth = inject(AuthService);
+  readonly branding = inject(BrandingService);
+
+  readonly logoAccept = LOGO_ACCEPT;
+  readonly isAdmin = computed(() => this.auth.user()?.rol?.nombre === 'Administrador');
+  readonly logoBusy = signal(false);
+  readonly logoMsg = signal<{ type: 'ok' | 'error'; text: string } | null>(null);
 
   readonly columns = ['codigo', 'descripcion', 'valor', 'activo'];
   readonly dataSource = new MatTableDataSource<Parametro>([]);
@@ -111,6 +120,57 @@ export class ParametrosComponent implements OnInit {
     this.search = '';
     this.estado = '';
     this.applyFilter();
+  }
+
+  onLogoSelected(input: HTMLInputElement): void {
+    const file = input.files?.[0];
+    input.value = ''; // allow choosing the same file again
+    if (!file) return;
+
+    const invalid = this.branding.validate(file);
+    if (invalid) {
+      this.logoMsg.set({ type: 'error', text: invalid });
+      return;
+    }
+    this.logoBusy.set(true);
+    this.logoMsg.set(null);
+    this.branding.upload(file).subscribe({
+      next: () => {
+        this.logoBusy.set(false);
+        this.logoMsg.set({ type: 'ok', text: 'Logo actualizado.' });
+        this.cargar();
+      },
+      error: (e: HttpErrorResponse) => {
+        this.logoBusy.set(false);
+        this.logoMsg.set({ type: 'error', text: this.uploadError(e) });
+      },
+    });
+  }
+
+  restablecerLogo(): void {
+    this.logoBusy.set(true);
+    this.logoMsg.set(null);
+    this.branding.reset().subscribe({
+      next: () => {
+        this.logoBusy.set(false);
+        this.logoMsg.set({ type: 'ok', text: 'Se volvió al logo predeterminado.' });
+        this.cargar();
+      },
+      error: (e: HttpErrorResponse) => {
+        this.logoBusy.set(false);
+        this.logoMsg.set({ type: 'error', text: this.uploadError(e) });
+      },
+    });
+  }
+
+  private uploadError(e: HttpErrorResponse): string {
+    if (e.status === 403) return 'Solo un Administrador puede cambiar el logo.';
+    if (e.status === 413) return 'La imagen es demasiado grande.';
+    if (e.status === 0) return 'No se pudo conectar con el servidor.';
+    // Business rule errors come in error[0]; storage errors in mensaje.
+    return e.error?.error?.[0] && e.status === 409
+      ? e.error.error[0]
+      : e.error?.mensaje ?? 'No se pudo guardar el logo.';
   }
 
   isActivo(p: Parametro): boolean {

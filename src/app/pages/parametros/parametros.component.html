@@ -40,6 +40,47 @@
   </div>
 </div>
 
+<!-- Company logo (parameter empresa.logo) -->
+<mat-card class="cardWithShadow logo-card">
+  <mat-card-content class="p-24">
+    <div class="logo-row">
+      <div class="logo-preview" [class.logo-preview--default]="!branding.isCustom()">
+        <img [src]="branding.logoUrl()" (error)="branding.markFailed()" alt="Logo actual" />
+      </div>
+      <div class="logo-info">
+        <h2>Logo de la empresa</h2>
+        <p>
+          Se muestra arriba del menú lateral. Se guarda en el parámetro <code class="code">empresa.logo</code>.
+          @if (!branding.isCustom()) {
+          <br /><span class="muted">Ahora se usa el logo predeterminado.</span>
+          }
+        </p>
+        @if (isAdmin()) {
+        <div class="logo-actions">
+          <input #logoInput type="file" [accept]="logoAccept" hidden (change)="onLogoSelected(logoInput)" />
+          <button mat-flat-button color="primary" (click)="logoInput.click()" [disabled]="logoBusy()">
+            <i class="iconify icon-18 m-r-6" data-icon="solar:upload-minimalistic-line-duotone"></i>
+            {{ branding.isCustom() ? 'Cambiar logo' : 'Subir logo' }}
+          </button>
+          @if (branding.isCustom()) {
+          <button mat-stroked-button (click)="restablecerLogo()" [disabled]="logoBusy()">Usar el predeterminado</button>
+          }
+          <span class="hint">PNG, JPG, WEBP, GIF o SVG · máx. 2 MB · mejor horizontal</span>
+        </div>
+        } @else {
+        <p class="hint">Solo un Administrador puede cambiar el logo.</p>
+        }
+        @if (logoBusy()) {
+        <mat-progress-bar mode="indeterminate" class="m-t-12"></mat-progress-bar>
+        }
+        @if (logoMsg(); as m) {
+        <div class="logo-msg" [class.logo-msg--error]="m.type === 'error'" role="status">{{ m.text }}</div>
+        }
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
 <mat-card class="cardWithShadow">
   <mat-card-content class="p-24">
     <!-- Filters -->
