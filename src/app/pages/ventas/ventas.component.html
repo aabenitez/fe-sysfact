@@ -1,0 +1,197 @@
+<!-- Header -->
+<div class="page-head">
+  <div>
+    <h1>Ventas</h1>
+    <p>Facturas emitidas. Hacé clic en una para ver el detalle.</p>
+  </div>
+  <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+    Actualizar
+  </button>
+</div>
+
+<!-- Summary (follows the filters) -->
+<div class="stats">
+  <div class="stat">
+    <span class="stat-icon"><i class="iconify" data-icon="solar:wallet-money-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() ? '—' : formatGs(totalFacturado()) }}</div>
+      <div class="stat-label">Total facturado{{ hayFiltros() ? ' (filtrado)' : '' }}</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--green"><i class="iconify" data-icon="solar:document-text-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">
+        {{ loading() ? '—' : filtradas().length }}
+        @if (!loading() && filtradas().length > 0) {
+        <small>· promedio {{ formatGs(ticketPromedio()) }}</small>
+        }
+      </div>
+      <div class="stat-label">Facturas</div>
+    </div>
+  </div>
+  <div class="stat stat--split">
+    <span class="stat-icon stat-icon--amber"><i class="iconify" data-icon="solar:card-transfer-line-duotone"></i></span>
+    <div class="split">
+      <div class="split-legend">
+        <span><i class="dot dot--cash"></i>Contado {{ loading() ? '—' : formatGs(totalContado()) }}</span>
+        <span><i class="dot dot--credit"></i>Crédito {{ loading() ? '—' : formatGs(totalCredito()) }}</span>
+      </div>
+      <div class="split-bar" [class.split-bar--empty]="loading() || totalFacturado() === 0">
+        <span [style.width.%]="porcentajeContado()"></span>
+      </div>
+      <div class="stat-label">IVA incluido: {{ loading() ? '—' : formatGs(totalIva()) }}</div>
+    </div>
+  </div>
+</div>
+
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <!-- Filters -->
+    <div class="filters">
+      <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+        <i matPrefix class="iconify field-icon" data-icon="solar:magnifer-line-duotone"></i>
+        <input
+          matInput
+          placeholder="Buscar por N.º, cliente, CI/RUC, vendedor o artículo…"
+          [(ngModel)]="search"
+          (ngModelChange)="applyFilter()"
+          aria-label="Buscar ventas"
+        />
+        @if (search) {
+        <button mat-icon-button matSuffix (click)="search = ''; applyFilter()" aria-label="Borrar búsqueda">
+          <mat-icon>close</mat-icon>
+        </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="periodo" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="periodo" (ngModelChange)="applyFilter()" aria-label="Filtrar por período">
+          @for (p of periodos; track p.value) {
+          <mat-option [value]="p.value">{{ p.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="condicion" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="condicion" (ngModelChange)="applyFilter()" aria-label="Filtrar por condición">
+          <mat-option value="">Contado y crédito</mat-option>
+          <mat-option value="CON">Contado</mat-option>
+          <mat-option value="CRE">Crédito</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    @for (i of [1, 2, 3, 4]; track i) {
+    <div class="skeleton-row"></div>
+    }
+    } @else if (error()) {
+    <div class="state">
+      <i class="iconify state-icon state-icon--error" data-icon="solar:danger-triangle-line-duotone"></i>
+      <h3>No se pudieron cargar las ventas</h3>
+      <p>{{ error() }}</p>
+      <button mat-flat-button color="primary" (click)="cargar()">Reintentar</button>
+    </div>
+    } @else if (ventas().length === 0) {
+    <div class="state">
+      <i class="iconify state-icon" data-icon="solar:document-text-line-duotone"></i>
+      <h3>Todavía no hay ventas</h3>
+      <p>Cuando se emitan facturas, van a aparecer acá.</p>
+    </div>
+    } @else {
+    <div class="result-info">
+      Mostrando <strong>{{ filtradas().length }}</strong> de {{ ventas().length }} ventas
+    </div>
+
+    <div class="table-wrap">
+      <table mat-table [dataSource]="dataSource" matSort matSortActive="fecha" matSortDirection="desc" class="ventas-table">
+        <ng-container matColumnDef="numero">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>N.º</th>
+          <td mat-cell *matCellDef="let v">
+            <span class="doc">{{ v.numero }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+          <td mat-cell *matCellDef="let v">
+            <div>{{ v.fecha | date: 'dd/MM/yyyy' }}</div>
+            <div class="muted small">{{ v.fecha | date: 'HH:mm' }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="cliente">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cliente</th>
+          <td mat-cell *matCellDef="let v">
+            <div class="person">
+              <span class="person-avatar">{{ iniciales(v) }}</span>
+              <div class="person-text">
+                <div class="person-name">{{ v.clienteTexto }}</div>
+                @if (v.cliente?.ciRuc) {
+                <div class="muted small">CI/RUC {{ v.cliente.ciRuc }}</div>
+                }
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="condicion">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Condición</th>
+          <td mat-cell *matCellDef="let v">
+            <span class="pill" [class.pill--credit]="v.condicionVenta === 'CRE'">{{ condicionLabel(v.condicionVenta) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="items">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Artículos</th>
+          <td mat-cell *matCellDef="let v">
+            <div>{{ v.unidades }} {{ v.unidades === 1 ? 'unidad' : 'unidades' }}</div>
+            <div class="muted small items-preview" [title]="v.items + ' ítems'">
+              @for (d of v.detallesVenta?.slice(0, 2); track d.id; let last = $last) {
+              {{ d.articulo?.nombre }}{{ last ? '' : ', ' }}
+              }
+              @if (v.items > 2) { y {{ v.items - 2 }} más }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="num">Total</th>
+          <td mat-cell *matCellDef="let v" class="num">
+            <div class="total">{{ formatGs(v.totalFactura) }}</div>
+            <div class="muted small">por {{ v.vendedorTexto }}</div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: columns"
+          class="clickable"
+          tabindex="0"
+          (click)="abrir(row)"
+          (keydown.enter)="abrir(row)"
+          [attr.aria-label]="'Ver factura ' + row.numero"
+        ></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-match" [attr.colspan]="columns.length">
+            Ninguna venta coincide con los filtros.
+            <button mat-button color="primary" (click)="limpiar()">Limpiar filtros</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [pageSizeOptions]="[10, 25, 50]"
+      [pageSize]="10"
+      showFirstLastButtons
+      aria-label="Paginación de ventas"
+    ></mat-paginator>
+    }
+  </mat-card-content>
+</mat-card>

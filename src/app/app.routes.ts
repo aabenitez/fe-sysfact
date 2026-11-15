@@ -21,6 +21,18 @@ export const routes: Routes = [
           import('./pages/inicio/inicio.component').then((m) => m.InicioComponent),
       },
       {
+        path: 'ventas',
+        title: 'Ventas · Sysfact',
+        loadComponent: () =>
+          import('./pages/ventas/ventas.component').then((m) => m.VentasComponent),
+      },
+      {
+        path: 'ventas/:id',
+        title: 'Factura · Sysfact',
+        loadComponent: () =>
+          import('./pages/ventas/venta-detalle.component').then((m) => m.VentaDetalleComponent),
+      },
+      {
         path: 'clientes',
         title: 'Clientes · Sysfact',
         loadComponent: () =>

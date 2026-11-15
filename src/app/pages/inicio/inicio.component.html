@@ -86,6 +86,10 @@
         <h2>Últimas ventas</h2>
         <p>Las 5 facturas más recientes</p>
       </div>
+      <a mat-button color="primary" routerLink="/ventas">
+        Ver todas
+        <i class="iconify icon-18 m-l-4" data-icon="solar:arrow-right-line-duotone"></i>
+      </a>
     </div>
 
     @if (loading()) {
@@ -111,7 +115,12 @@
         </thead>
         <tbody>
           @for (v of ventas(); track v.id) {
-          <tr>
+          <tr
+            class="clickable"
+            tabindex="0"
+            [routerLink]="['/ventas', v.id]"
+            [attr.aria-label]="'Ver factura ' + v.id"
+          >
             <td class="muted">#{{ v.id }}</td>
             <td>{{ v.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
             <td>

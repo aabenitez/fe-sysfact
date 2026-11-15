@@ -228,6 +228,17 @@ $border: #e0e6eb;
   tr:last-child td {
     border-bottom: none;
   }
+  tr.clickable {
+    cursor: pointer;
+
+    &:hover td,
+    &:focus-visible td {
+      background: #f5f4ff;
+    }
+    &:focus-visible {
+      outline: none;
+    }
+  }
   .num {
     text-align: right;
   }

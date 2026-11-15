@@ -1,0 +1,138 @@
+<!-- Toolbar (hidden when printing) -->
+<div class="toolbar no-print">
+  <a mat-button routerLink="/ventas" class="back">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:arrow-left-line-duotone"></i>
+    Volver a ventas
+  </a>
+  @if (venta()) {
+  <button mat-flat-button color="primary" (click)="imprimir()">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:printer-minimalistic-line-duotone"></i>
+    Imprimir
+  </button>
+  }
+</div>
+
+@if (loading()) {
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <div class="skeleton skeleton--title"></div>
+    @for (i of [1, 2, 3]; track i) {
+    <div class="skeleton skeleton--row"></div>
+    }
+  </mat-card-content>
+</mat-card>
+} @else if (error()) {
+<mat-card class="cardWithShadow">
+  <mat-card-content class="state">
+    <i class="iconify state-icon" data-icon="solar:document-text-line-duotone"></i>
+    <h3>{{ error() }}</h3>
+    <p>Volvé al listado para elegir otra factura.</p>
+    <div class="state-actions">
+      <a mat-stroked-button routerLink="/ventas">Ver ventas</a>
+      <button mat-flat-button color="primary" (click)="reintentar()">Reintentar</button>
+    </div>
+  </mat-card-content>
+</mat-card>
+} @else { @if (venta(); as v) {
+<mat-card class="cardWithShadow invoice">
+  <mat-card-content class="invoice-body">
+    <!-- Header -->
+    <header class="inv-head">
+      <div class="inv-brand">
+        <img [src]="branding.logoUrl()" (error)="branding.markFailed()" alt="Logo de la empresa" />
+      </div>
+      <div class="inv-title">
+        <span class="inv-kind">Factura</span>
+        <span class="inv-number">N.º {{ numeroFactura(v.id) }}</span>
+        <span class="pill" [class.pill--credit]="v.condicionVenta === 'CRE'">{{ condicionLabel(v.condicionVenta) }}</span>
+      </div>
+    </header>
+
+    <!-- Parties -->
+    <section class="inv-meta">
+      <div class="meta-block">
+        <span class="meta-label">Cliente</span>
+        <strong>{{ clienteNombre(v) }}</strong>
+        @if (v.cliente?.ciRuc) {
+        <span>CI/RUC {{ v.cliente?.ciRuc }}</span>
+        }
+        @if (v.cliente?.email) {
+        <span class="muted">{{ v.cliente?.email }}</span>
+        }
+        @if (v.cliente?.telefono) {
+        <span class="muted">{{ v.cliente?.telefono }}</span>
+        }
+      </div>
+      <div class="meta-block">
+        <span class="meta-label">Fecha de emisión</span>
+        <strong>{{ v.fecha | date: "d 'de' MMMM 'de' y" }}</strong>
+        <span class="muted">{{ v.fecha | date: 'HH:mm' }} h</span>
+      </div>
+      <div class="meta-block">
+        <span class="meta-label">Atendido por</span>
+        <strong>{{ vendedorNombre(v) }}</strong>
+        @if (v.usuario?.correo) {
+        <span class="muted">{{ v.usuario?.correo }}</span>
+        }
+      </div>
+    </section>
+
+    <!-- Lines -->
+    <div class="table-wrap">
+      <table class="lines">
+        <thead>
+          <tr>
+            <th class="qty">Cant.</th>
+            <th>Artículo</th>
+            <th class="num">Precio unit.</th>
+            <th class="num">Descuento</th>
+            <th class="center">IVA</th>
+            <th class="num">Importe</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (d of lineas(); track d.id) {
+          <tr>
+            <td class="qty">{{ d.cantidad }}</td>
+            <td>
+              <div class="item-name">{{ d.articulo?.nombre || 'Artículo #' + d.articulo?.id }}</div>
+              @if (d.articulo?.descripcion) {
+              <div class="muted small">{{ d.articulo?.descripcion }}</div>
+              }
+            </td>
+            <td class="num">{{ formatGs(d.precioVenta) }}</td>
+            <td class="num">{{ d.descuento ? '− ' + formatGs(d.descuento) : '—' }}</td>
+            <td class="center"><span class="tax">{{ tasa(d) }}</span></td>
+            <td class="num strong">{{ formatGs(importe(d)) }}</td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="6" class="empty">Esta factura no tiene artículos cargados.</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Totals -->
+    <section class="inv-foot">
+      <div class="tax-box">
+        <span class="meta-label">Liquidación del IVA</span>
+        <div class="row"><span>Exentas</span><span>{{ formatGs(v.totalExenta) }}</span></div>
+        <div class="row"><span>IVA 5 %</span><span>{{ formatGs(v.totalIva5) }}</span></div>
+        <div class="row"><span>IVA 10 %</span><span>{{ formatGs(v.totalIva10) }}</span></div>
+        <div class="row row--strong"><span>Total IVA</span><span>{{ formatGs(totalIva()) }}</span></div>
+      </div>
+
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><span>{{ formatGs(subtotal()) }}</span></div>
+        @if (v.totalDescuento) {
+        <div class="row discount"><span>Descuentos</span><span>− {{ formatGs(v.totalDescuento) }}</span></div>
+        }
+        <div class="row grand"><span>Total a pagar</span><span>{{ formatGs(v.totalFactura) }}</span></div>
+      </div>
+    </section>
+  </mat-card-content>
+</mat-card>
+} }
