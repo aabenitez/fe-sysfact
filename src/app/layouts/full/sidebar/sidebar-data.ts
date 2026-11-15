@@ -10,6 +10,11 @@ export const navItems: NavItem[] = [
     route: '/inicio',
   },
   {
+    displayName: 'Clientes',
+    iconName: 'solar:users-group-rounded-line-duotone',
+    route: '/clientes',
+  },
+  {
     displayName: 'Artículos',
     iconName: 'solar:box-line-duotone',
     route: '/articulos',
