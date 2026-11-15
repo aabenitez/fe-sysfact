@@ -27,6 +27,14 @@ export const routes: Routes = [
           import('./pages/articulos/articulos.component').then((m) => m.ArticulosComponent),
       },
       {
+        path: 'unidades-de-medida',
+        title: 'Unidades de medida · Sysfact',
+        loadComponent: () =>
+          import('./pages/unidades-medida/unidades-medida.component').then(
+            (m) => m.UnidadesMedidaComponent
+          ),
+      },
+      {
         path: 'parametros',
         title: 'Parámetros · Sysfact',
         loadComponent: () =>

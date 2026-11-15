@@ -68,7 +68,7 @@ export class InicioComponent implements OnInit {
         { label: 'Ventas', value: r.ventas?.length ?? null, icon: 'solar:cart-large-2-line-duotone', tone: 'primary', hint: 'facturas emitidas' },
         { label: 'Clientes', value: r.clientes?.length ?? null, icon: 'solar:users-group-rounded-line-duotone', tone: 'success', hint: 'registrados' },
         { label: 'Artículos', value: r.articulos?.length ?? null, icon: 'solar:box-line-duotone', tone: 'warning', hint: 'en catálogo', route: '/articulos' },
-        { label: 'Unidades de medida', value: r.unidades?.length ?? null, icon: 'solar:ruler-line-duotone', tone: 'info', hint: 'configuradas' },
+        { label: 'Unidades de medida', value: r.unidades?.length ?? null, icon: 'solar:ruler-line-duotone', tone: 'info', hint: 'configuradas', route: '/unidades-de-medida' },
         { label: 'Parámetros', value: r.parametros?.length ?? null, icon: 'solar:settings-line-duotone', tone: 'neutral', hint: 'del sistema', route: '/parametros' },
       ]);
       this.loading.set(false);

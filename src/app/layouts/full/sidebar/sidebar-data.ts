@@ -15,6 +15,11 @@ export const navItems: NavItem[] = [
     route: '/articulos',
   },
   {
+    displayName: 'Unidades de medida',
+    iconName: 'solar:ruler-line-duotone',
+    route: '/unidades-de-medida',
+  },
+  {
     displayName: 'Parámetros',
     iconName: 'solar:settings-line-duotone',
     route: '/parametros',
