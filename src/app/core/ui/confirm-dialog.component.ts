@@ -16,10 +16,10 @@ export interface ConfirmDialogData {
   standalone: true,
   imports: [MaterialModule],
   template: `
-    <h2 mat-dialog-title class="title">
-      @if (data.peligro) {
-      <span class="icon"><i class="iconify" data-icon="solar:trash-bin-trash-line-duotone"></i></span>
-      }
+    <h2 mat-dialog-title class="dialog-title">
+      <span class="dialog-title-icon" [class.dialog-title-icon--danger]="data.peligro">
+        <i class="iconify" [attr.data-icon]="data.peligro ? 'solar:trash-bin-trash-line-duotone' : 'solar:question-circle-line-duotone'"></i>
+      </span>
       {{ data.titulo }}
     </h2>
     <mat-dialog-content>
@@ -39,21 +39,6 @@ export interface ConfirmDialogData {
   `,
   styles: [
     `
-      .title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .icon {
-        display: grid;
-        place-items: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        font-size: 20px;
-        color: #d92d20;
-        background: #fef3f2;
-      }
       .msg {
         margin: 0;
         color: #4b5563;

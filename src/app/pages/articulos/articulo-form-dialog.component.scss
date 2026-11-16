@@ -2,23 +2,6 @@ $primary: #635bff;
 $ink: #111c2d;
 $muted: #707a82;
 
-.title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.title-icon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  font-size: 20px;
-  color: $primary;
-  background: #eeedff;
-}
-
 .form {
   display: flex;
   flex-direction: column;
