@@ -25,6 +25,11 @@ export const navItems: NavItem[] = [
     route: '/articulos',
   },
   {
+    displayName: 'Proveedores',
+    iconName: 'solar:delivery-line-duotone',
+    route: '/proveedores',
+  },
+  {
     displayName: 'Unidades de medida',
     iconName: 'solar:ruler-line-duotone',
     route: '/unidades-de-medida',

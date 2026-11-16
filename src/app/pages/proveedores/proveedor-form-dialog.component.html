@@ -1,0 +1,51 @@
+<h2 mat-dialog-title class="title">
+  <span class="title-icon"><i class="iconify" [attr.data-icon]="editando ? 'solar:pen-new-square-line-duotone' : 'solar:delivery-line-duotone'"></i></span>
+  {{ editando ? 'Editar proveedor' : 'Nuevo proveedor' }}
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" (ngSubmit)="guardar()" id="proveedor-form" class="form" novalidate>
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="nombre" maxlength="100" cdkFocusInitial autocomplete="off" />
+      <mat-hint align="end">{{ form.controls.nombre.value.length }}/100</mat-hint>
+      @if (form.controls.nombre.hasError('required') || form.controls.nombre.hasError('pattern')) {
+      <mat-error>El nombre es obligatorio.</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="frow">
+      <mat-form-field appearance="outline">
+        <mat-label>Persona de contacto (opcional)</mat-label>
+        <input matInput formControlName="contacto" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Teléfono (opcional)</mat-label>
+        <input matInput formControlName="telefono" maxlength="30" inputmode="tel" autocomplete="off" />
+        @if (form.controls.telefono.hasError('pattern')) {
+        <mat-error>Usá solo números, espacios y + ( ) - .</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Dirección (opcional)</mat-label>
+      <input matInput formControlName="direccion" maxlength="100" autocomplete="off" />
+    </mat-form-field>
+
+    @if (errorGuardar()) {
+    <div class="alert" role="alert">{{ errorGuardar() }}</div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancelar()" [disabled]="guardando()">Cancelar</button>
+  <button mat-flat-button color="primary" type="submit" form="proveedor-form" [disabled]="guardando()">
+    @if (guardando()) {
+    <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+    }
+    {{ editando ? 'Guardar cambios' : 'Crear proveedor' }}
+  </button>
+</mat-dialog-actions>

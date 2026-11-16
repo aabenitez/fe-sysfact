@@ -1,0 +1,227 @@
+<!-- Header -->
+<div class="page-head">
+  <div>
+    <h1>Proveedores</h1>
+    <p>Quiénes proveen los artículos del catálogo.</p>
+  </div>
+  <div class="head-actions">
+    <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+      Actualizar
+    </button>
+    @if (isAdmin()) {
+    <button mat-flat-button color="primary" (click)="nuevo()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:add-circle-line-duotone"></i>
+      Nuevo proveedor
+    </button>
+    }
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="stats">
+  <div class="stat">
+    <span class="stat-icon"><i class="iconify" data-icon="solar:delivery-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">
+        {{ loading() ? '—' : proveedores().length }}
+        @if (!loading() && sinContacto() > 0) {
+        <small>· {{ sinContacto() }} sin datos de contacto</small>
+        }
+      </div>
+      <div class="stat-label">Proveedores registrados</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--green"><i class="iconify" data-icon="solar:box-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() || !articulosDisponibles() ? '—' : conArticulos() }}</div>
+      <div class="stat-label">Con artículos en el catálogo</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--amber"><i class="iconify" data-icon="solar:crown-minimalistic-line-duotone"></i></span>
+    <div class="stat-text">
+      <div class="stat-value stat-value--name" [title]="principal()?.nombre ?? ''">
+        {{ loading() || !principal() ? '—' : principal()!.nombre }}
+      </div>
+      <div class="stat-label">
+        Principal proveedor
+        @if (!loading() && principal()) {
+        · {{ principal()!.articulos }} art.
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <!-- Filters -->
+    <div class="filters">
+      <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+        <i matPrefix class="iconify field-icon" data-icon="solar:magnifer-line-duotone"></i>
+        <input
+          matInput
+          placeholder="Buscar por nombre, contacto, teléfono, dirección o artículo…"
+          [(ngModel)]="search"
+          (ngModelChange)="applyFilter()"
+          aria-label="Buscar proveedores"
+        />
+        @if (search) {
+        <button mat-icon-button matSuffix (click)="search = ''; applyFilter()" aria-label="Borrar búsqueda">
+          <mat-icon>close</mat-icon>
+        </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filtro" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="filtro" (ngModelChange)="applyFilter()" aria-label="Filtrar proveedores">
+          <mat-option value="">Todos los proveedores</mat-option>
+          @if (articulosDisponibles()) {
+          <mat-option value="con-articulos">Con artículos</mat-option>
+          <mat-option value="sin-articulos">Sin artículos</mat-option>
+          }
+          <mat-option value="sin-contacto">Sin datos de contacto</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    @for (i of [1, 2, 3]; track i) {
+    <div class="skeleton-row"></div>
+    }
+    } @else if (error()) {
+    <div class="state">
+      <i class="iconify state-icon state-icon--error" data-icon="solar:danger-triangle-line-duotone"></i>
+      <h3>No se pudieron cargar los proveedores</h3>
+      <p>{{ error() }}</p>
+      <button mat-flat-button color="primary" (click)="cargar()">Reintentar</button>
+    </div>
+    } @else if (proveedores().length === 0) {
+    <div class="state">
+      <i class="iconify state-icon" data-icon="solar:delivery-line-duotone"></i>
+      <h3>Todavía no hay proveedores</h3>
+      <p>Los proveedores son necesarios para cargar artículos.</p>
+      @if (isAdmin()) {
+      <button mat-flat-button color="primary" (click)="nuevo()">Crear el primer proveedor</button>
+      }
+    </div>
+    } @else {
+    <div class="result-info">
+      Mostrando <strong>{{ visibles() }}</strong> de {{ proveedores().length }} proveedores
+      @if (!articulosDisponibles()) {
+      · <span class="warn">no se pudieron contar los artículos</span>
+      }
+    </div>
+
+    <div class="table-wrap">
+      <table mat-table [dataSource]="dataSource" matSort matSortActive="nombre" matSortDirection="asc" class="proveedores-table">
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Proveedor</th>
+          <td mat-cell *matCellDef="let p">
+            <div class="supplier">
+              <span class="supplier-avatar">{{ iniciales(p) }}</span>
+              <div class="supplier-text">
+                <div class="supplier-name">{{ p.nombre }}</div>
+                <div class="muted small">
+                  @if (p.direccion) {
+                  <i class="iconify inline-icon" data-icon="solar:map-point-line-duotone"></i>{{ p.direccion }}
+                  } @else {
+                  Sin dirección
+                  }
+                </div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="contacto">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Contacto</th>
+          <td mat-cell *matCellDef="let p">
+            @if (!p.contacto && !p.telefono) {
+            <span class="pill pill--off">Sin datos</span>
+            } @else {
+            <div class="contact">
+              @if (p.contacto) {
+              <span class="contact-line">
+                <i class="iconify" data-icon="solar:user-rounded-line-duotone"></i>
+                <span>{{ p.contacto }}</span>
+              </span>
+              }
+              @if (p.telefono) {
+              <a [href]="telHref(p.telefono)" class="contact-line">
+                <i class="iconify" data-icon="solar:phone-line-duotone"></i>
+                <span>{{ p.telefono }}</span>
+              </a>
+              }
+            </div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="articulos">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Artículos</th>
+          <td mat-cell *matCellDef="let p">
+            @if (p.articulos === null) {
+            <span class="muted">—</span>
+            } @else if (p.articulos === 0) {
+            <span class="pill pill--off">Sin artículos</span>
+            } @else {
+            <a routerLink="/articulos" class="items" [title]="p.nombresArticulos.join(', ')">
+              <strong>{{ p.articulos }} {{ p.articulos === 1 ? 'artículo' : 'artículos' }}</strong>
+              <span class="muted small items-preview">
+                {{ p.nombresArticulos.slice(0, 2).join(', ') }}{{ p.articulos > 2 ? ' y ' + (p.articulos - 2) + ' más' : '' }}
+              </span>
+            </a>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="actions-col"><span class="cdk-visually-hidden">Acciones</span></th>
+          <td mat-cell *matCellDef="let p" class="actions-col">
+            <button
+              mat-icon-button
+              (click)="editar(p)"
+              [disabled]="eliminando() === p.id"
+              matTooltip="Editar"
+              [attr.aria-label]="'Editar ' + p.nombre"
+            >
+              <i class="iconify action-icon" data-icon="solar:pen-new-square-line-duotone"></i>
+            </button>
+            <button
+              mat-icon-button
+              class="danger"
+              (click)="eliminar(p)"
+              [disabled]="eliminando() === p.id"
+              [matTooltip]="(p.articulos ?? 0) > 0 ? 'Tiene artículos asociados' : 'Eliminar'"
+              [attr.aria-label]="'Eliminar ' + p.nombre"
+            >
+              <i class="iconify action-icon" data-icon="solar:trash-bin-trash-line-duotone"></i>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns()"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-match" [attr.colspan]="columns().length">
+            Ningún proveedor coincide con la búsqueda.
+            <button mat-button color="primary" (click)="limpiar()">Limpiar filtros</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [pageSizeOptions]="[10, 25, 50]"
+      [pageSize]="10"
+      showFirstLastButtons
+      aria-label="Paginación de proveedores"
+    ></mat-paginator>
+    }
+  </mat-card-content>
+</mat-card>

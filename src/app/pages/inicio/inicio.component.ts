@@ -20,7 +20,7 @@ interface Kpi {
   label: string;
   value: number | null;
   icon: string;
-  tone: 'primary' | 'success' | 'warning' | 'info' | 'neutral';
+  tone: 'primary' | 'success' | 'warning' | 'info' | 'neutral' | 'accent';
   hint: string;
   /** Page the card opens when clicked (only for sections that already exist). */
   route?: string;
@@ -59,6 +59,7 @@ export class InicioComponent implements OnInit {
       ventas: get<Venta>('ventas'),
       unidades: get<unknown>('unidades-de-medida'),
       parametros: get<unknown>('parametros'),
+      proveedores: get<unknown>('proveedores'),
     }).subscribe((r) => {
       const ventas = r.ventas ?? [];
       this.loadError.set(Object.values(r).every((v) => v === null));
@@ -68,6 +69,7 @@ export class InicioComponent implements OnInit {
         { label: 'Ventas', value: r.ventas?.length ?? null, icon: 'solar:cart-large-2-line-duotone', tone: 'primary', hint: 'facturas emitidas', route: '/ventas' },
         { label: 'Clientes', value: r.clientes?.length ?? null, icon: 'solar:users-group-rounded-line-duotone', tone: 'success', hint: 'registrados', route: '/clientes' },
         { label: 'Artículos', value: r.articulos?.length ?? null, icon: 'solar:box-line-duotone', tone: 'warning', hint: 'en catálogo', route: '/articulos' },
+        { label: 'Proveedores', value: r.proveedores?.length ?? null, icon: 'solar:delivery-line-duotone', tone: 'accent', hint: 'registrados', route: '/proveedores' },
         { label: 'Unidades de medida', value: r.unidades?.length ?? null, icon: 'solar:ruler-line-duotone', tone: 'info', hint: 'configuradas', route: '/unidades-de-medida' },
         { label: 'Parámetros', value: r.parametros?.length ?? null, icon: 'solar:settings-line-duotone', tone: 'neutral', hint: 'del sistema', route: '/parametros' },
       ]);

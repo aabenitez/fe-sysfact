@@ -45,6 +45,12 @@ export const routes: Routes = [
           import('./pages/articulos/articulos.component').then((m) => m.ArticulosComponent),
       },
       {
+        path: 'proveedores',
+        title: 'Proveedores · Sysfact',
+        loadComponent: () =>
+          import('./pages/proveedores/proveedores.component').then((m) => m.ProveedoresComponent),
+      },
+      {
         path: 'unidades-de-medida',
         title: 'Unidades de medida · Sysfact',
         loadComponent: () =>
