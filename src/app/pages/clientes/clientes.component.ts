@@ -2,14 +2,20 @@ import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { catchError, forkJoin, of } from 'rxjs';
 import { MaterialModule } from '../../material.module';
 import { Cliente, VentaResumen } from '../../core/models/cliente.model';
 import { ClienteService } from '../../core/services/cliente.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { formatGs } from '../../core/format';
+import { mensajeError } from '../../core/http-error';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../core/ui/confirm-dialog.component';
+import { ClienteFormData, ClienteFormDialogComponent } from './cliente-form-dialog.component';
 
 type Filtro = '' | 'con-compras' | 'sin-compras' | 'sin-email';
 
@@ -30,8 +36,16 @@ interface ClienteFila extends Cliente {
 })
 export class ClientesComponent implements OnInit {
   private readonly service = inject(ClienteService);
+  private readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snack = inject(MatSnackBar);
 
-  readonly columns = ['nombre', 'ciRuc', 'contacto', 'compras'];
+  /** Only Administrators can create, edit or delete (the backend enforces it too). */
+  readonly isAdmin = computed(() => this.auth.user()?.rol?.nombre === 'Administrador');
+  readonly columns = computed(() =>
+    ['nombre', 'ciRuc', 'contacto', 'compras'].concat(this.isAdmin() ? ['acciones'] : [])
+  );
+  readonly eliminando = signal<number | null>(null);
   readonly dataSource = new MatTableDataSource<ClienteFila>([]);
 
   readonly loading = signal(true);
@@ -160,6 +174,69 @@ export class ClientesComponent implements OnInit {
     this.search = '';
     this.filtro = '';
     this.applyFilter();
+  }
+
+  nuevo(): void {
+    this.abrirFormulario({});
+  }
+
+  editar(c: ClienteFila): void {
+    this.abrirFormulario({ cliente: c });
+  }
+
+  eliminar(c: ClienteFila): void {
+    if ((c.compras ?? 0) > 0) {
+      // Known in advance: the backend would reject it (the sales keep referring to the client).
+      this.aviso(
+        `${c.nombreCompleto} tiene ${c.compras} ${c.compras === 1 ? 'venta registrada' : 'ventas registradas'} ` +
+          'y no se puede eliminar.',
+        true
+      );
+      return;
+    }
+    const data: ConfirmDialogData = {
+      titulo: 'Eliminar cliente',
+      mensaje: `¿Eliminar a ${c.nombreCompleto} (CI/RUC ${c.ciRuc})? Esta acción no se puede deshacer.`,
+      confirmar: 'Eliminar',
+      peligro: true,
+    };
+    this.dialog
+      .open(ConfirmDialogComponent, { data, width: '440px' })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (!ok) return;
+        this.eliminando.set(c.id);
+        this.service.eliminar(c.id).subscribe({
+          next: () => {
+            this.eliminando.set(null);
+            this.aviso(`Se eliminó a ${c.nombreCompleto}.`);
+            this.cargar();
+          },
+          error: (e: HttpErrorResponse) => {
+            this.eliminando.set(null);
+            this.aviso(mensajeError(e, 'No se pudo eliminar el cliente.'), true);
+          },
+        });
+      });
+  }
+
+  private abrirFormulario(data: ClienteFormData): void {
+    this.dialog
+      .open(ClienteFormDialogComponent, { data, width: '600px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((guardado?: Cliente) => {
+        if (!guardado) return;
+        const nombre = `${guardado.nombres} ${guardado.apellidos}`.trim();
+        this.aviso(data.cliente ? 'Se guardaron los cambios.' : `Se registró a ${nombre}.`);
+        this.cargar();
+      });
+  }
+
+  private aviso(texto: string, error = false): void {
+    this.snack.open(texto, 'Cerrar', {
+      duration: error ? 7000 : 3500,
+      panelClass: error ? 'snack-error' : 'snack-ok',
+    });
   }
 
   iniciales(c: ClienteFila): string {

@@ -4,10 +4,18 @@
     <h1>Clientes</h1>
     <p>Personas y empresas a las que se les factura.</p>
   </div>
-  <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
-    <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
-    Actualizar
-  </button>
+  <div class="head-actions">
+    <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+      Actualizar
+    </button>
+    @if (isAdmin()) {
+    <button mat-flat-button color="primary" (click)="nuevo()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:user-plus-rounded-line-duotone"></i>
+      Nuevo cliente
+    </button>
+    }
+  </div>
 </div>
 
 <!-- Summary -->
@@ -98,6 +106,9 @@
       <i class="iconify state-icon" data-icon="solar:users-group-rounded-line-duotone"></i>
       <h3>Todavía no hay clientes</h3>
       <p>Cuando se registren clientes en el sistema, van a aparecer acá.</p>
+      @if (isAdmin()) {
+      <button mat-flat-button color="primary" (click)="nuevo()">Registrar el primer cliente</button>
+      }
     </div>
     } @else {
     <div class="result-info">
@@ -172,11 +183,36 @@
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="actions-col"><span class="cdk-visually-hidden">Acciones</span></th>
+          <td mat-cell *matCellDef="let c" class="actions-col">
+            <button
+              mat-icon-button
+              (click)="editar(c)"
+              [disabled]="eliminando() === c.id"
+              matTooltip="Editar"
+              [attr.aria-label]="'Editar ' + c.nombreCompleto"
+            >
+              <i class="iconify action-icon" data-icon="solar:pen-new-square-line-duotone"></i>
+            </button>
+            <button
+              mat-icon-button
+              class="danger"
+              (click)="eliminar(c)"
+              [disabled]="eliminando() === c.id"
+              [matTooltip]="(c.compras ?? 0) > 0 ? 'Tiene ventas registradas' : 'Eliminar'"
+              [attr.aria-label]="'Eliminar ' + c.nombreCompleto"
+            >
+              <i class="iconify action-icon" data-icon="solar:trash-bin-trash-line-duotone"></i>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns()"></tr>
 
         <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell no-match" [attr.colspan]="columns.length">
+          <td class="mat-cell no-match" [attr.colspan]="columns().length">
             Ningún cliente coincide con la búsqueda.
             <button mat-button color="primary" (click)="limpiar()">Limpiar filtros</button>
           </td>

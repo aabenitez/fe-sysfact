@@ -31,6 +31,30 @@ $muted: #707a82;
   }
 }
 
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.actions-col {
+  width: 96px;
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.action-icon {
+  font-size: 20px;
+  color: $muted;
+}
+
+button.danger:hover .action-icon {
+  color: #d92d20;
+}
+button:not(.danger):hover .action-icon {
+  color: $primary;
+}
+
 /* ---------------- Summary ---------------- */
 .stats {
   display: grid;

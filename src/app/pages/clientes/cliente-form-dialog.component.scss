@@ -1,0 +1,45 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+}
+
+.full {
+  width: 100%;
+}
+
+// Not ".row": MatDash defines a global .row with negative margins.
+.frow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 4px 16px;
+
+  mat-form-field {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 559px) {
+  .frow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.alert {
+  margin: 4px 0 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #b42318;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+}
+
+.btn-spinner {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}
