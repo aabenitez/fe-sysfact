@@ -37,22 +37,36 @@ $muted: #707a82;
   }
 }
 
+// The toggle lines up with the price field box: the label sits in the free space above the
+// row (so it doesn't push the buttons down) and the buttons share the field's 46px height.
 .tax {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 0 0 auto;
-  padding-top: 2px;
+  position: relative;
 }
 
 .tax-label {
+  position: absolute;
+  bottom: 100%;
+  left: 2px;
+  margin-bottom: 4px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
   color: $muted;
 }
 
 .tax-toggle {
+  // 44px + 1px border top and bottom = 46px, the height of the outlined text fields.
+  --mat-standard-button-toggle-height: 44px;
   border-radius: 10px !important;
+}
+
+@media (max-width: 559px) {
+  // Single column: the toggle goes under the price hint, so the label returns to the flow.
+  .tax-label {
+    position: static;
+    display: block;
+    margin: 0 0 6px;
+  }
 }
 
 .muted {
