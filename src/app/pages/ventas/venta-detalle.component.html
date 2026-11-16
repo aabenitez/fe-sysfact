@@ -96,9 +96,9 @@
           <tr>
             <td class="qty">{{ d.cantidad }}</td>
             <td>
-              <div class="item-name">{{ d.articulo?.nombre || 'Artículo #' + d.articulo?.id }}</div>
-              @if (d.articulo?.descripcion) {
-              <div class="muted small">{{ d.articulo?.descripcion }}</div>
+              <div class="item-name">{{ d.articulo.nombre || 'Artículo #' + d.articulo.id }}</div>
+              @if (d.articulo.descripcion) {
+              <div class="muted small">{{ d.articulo.descripcion }}</div>
               }
             </td>
             <td class="num">{{ formatGs(d.precioVenta) }}</td>

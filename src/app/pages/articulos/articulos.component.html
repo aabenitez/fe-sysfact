@@ -4,10 +4,18 @@
     <h1>Artículos</h1>
     <p>Catálogo de productos disponibles para la venta.</p>
   </div>
-  <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
-    <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
-    Actualizar
-  </button>
+  <div class="head-actions">
+    <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+      Actualizar
+    </button>
+    @if (isAdmin()) {
+    <button mat-flat-button color="primary" (click)="nuevo()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:add-circle-line-duotone"></i>
+      Nuevo artículo
+    </button>
+    }
+  </div>
 </div>
 
 <!-- Summary -->
@@ -63,6 +71,15 @@
           }
         </mat-select>
       </mat-form-field>
+
+      <mat-form-field appearance="outline" class="unit" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="tasa" (ngModelChange)="applyFilter()" aria-label="Filtrar por IVA">
+          <mat-option value="">Todas las tasas</mat-option>
+          @for (t of tasas; track t.value) {
+          <mat-option [value]="'' + t.value">{{ t.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
 
     @if (loading()) {
@@ -82,6 +99,9 @@
       <i class="iconify state-icon" data-icon="solar:box-minimalistic-line-duotone"></i>
       <h3>Todavía no hay artículos</h3>
       <p>Cuando se carguen artículos en el sistema, van a aparecer acá.</p>
+      @if (isAdmin()) {
+      <button mat-flat-button color="primary" (click)="nuevo()">Crear el primer artículo</button>
+      }
     </div>
     } @else {
     <div class="result-info">
@@ -117,14 +137,51 @@
 
         <ng-container matColumnDef="precio">
           <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="num">Precio</th>
-          <td mat-cell *matCellDef="let a" class="num price">{{ formatGs(a.precio) }}</td>
+          <td mat-cell *matCellDef="let a" class="num">
+            <div class="price">{{ formatGs(a.precio) }}</div>
+            @if (a.tasaIva) {
+            <div class="iva-hint">IVA {{ formatGs(ivaIncluido(a.precio, a.tasaIva)) }}</div>
+            }
+          </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        <ng-container matColumnDef="iva">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>IVA</th>
+          <td mat-cell *matCellDef="let a">
+            <span class="tax tax--{{ a.tasaIva }}">{{ tasaLabel(a.tasaIva) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="actions-col"><span class="cdk-visually-hidden">Acciones</span></th>
+          <td mat-cell *matCellDef="let a" class="actions-col">
+            <button
+              mat-icon-button
+              (click)="editar(a)"
+              [disabled]="eliminando() === a.id"
+              matTooltip="Editar"
+              [attr.aria-label]="'Editar ' + a.nombre"
+            >
+              <i class="iconify action-icon" data-icon="solar:pen-new-square-line-duotone"></i>
+            </button>
+            <button
+              mat-icon-button
+              class="danger"
+              (click)="eliminar(a)"
+              [disabled]="eliminando() === a.id"
+              matTooltip="Eliminar"
+              [attr.aria-label]="'Eliminar ' + a.nombre"
+            >
+              <i class="iconify action-icon" data-icon="solar:trash-bin-trash-line-duotone"></i>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns()"></tr>
 
         <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell no-match" [attr.colspan]="columns.length">
+          <td class="mat-cell no-match" [attr.colspan]="columns().length">
             Ningún artículo coincide con la búsqueda.
             <button mat-button color="primary" (click)="limpiar()">Limpiar filtros</button>
           </td>

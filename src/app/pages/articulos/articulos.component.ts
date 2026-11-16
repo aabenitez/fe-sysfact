@@ -1,12 +1,21 @@
 import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { MaterialModule } from '../../material.module';
-import { Articulo } from '../../core/models/articulo.model';
+import { Articulo, TASAS_IVA, ivaIncluido, tasaLabel } from '../../core/models/articulo.model';
 import { ArticuloService } from '../../core/services/articulo.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { formatGs } from '../../core/format';
+import { mensajeError } from '../../core/http-error';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../core/ui/confirm-dialog.component';
+import { ArticuloFormData, ArticuloFormDialogComponent } from './articulo-form-dialog.component';
+
+type FiltroTasa = '' | '10' | '5' | '0';
 
 @Component({
   selector: 'app-articulos',
@@ -17,17 +26,28 @@ import { formatGs } from '../../core/format';
 })
 export class ArticulosComponent implements OnInit {
   private readonly service = inject(ArticuloService);
+  private readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snack = inject(MatSnackBar);
 
-  readonly columns = ['nombre', 'unidad', 'proveedor', 'precio'];
+  /** Only Administrators can create, edit or delete (the backend enforces it too). */
+  readonly isAdmin = computed(() => this.auth.user()?.rol?.nombre === 'Administrador');
+  readonly columns = computed(() =>
+    ['nombre', 'unidad', 'proveedor', 'iva', 'precio'].concat(this.isAdmin() ? ['acciones'] : [])
+  );
   readonly dataSource = new MatTableDataSource<Articulo>([]);
 
   readonly loading = signal(true);
   readonly error = signal(false);
   readonly articulos = signal<Articulo[]>([]);
   readonly visibles = signal(0);
+  /** Id of the article being deleted, to disable its buttons meanwhile. */
+  readonly eliminando = signal<number | null>(null);
 
   search = '';
   unidad = '';
+  tasa: FiltroTasa = '';
+  readonly tasas = TASAS_IVA;
 
   readonly unidades = computed(() =>
     [...new Set(this.articulos().map((a) => a.unidadMedida?.nombre).filter(Boolean))].sort()
@@ -46,6 +66,8 @@ export class ArticulosComponent implements OnInit {
   }
 
   readonly formatGs = formatGs;
+  readonly tasaLabel = tasaLabel;
+  readonly ivaIncluido = ivaIncluido;
 
   constructor() {
     this.dataSource.sortingDataAccessor = (a, col) => {
@@ -54,6 +76,8 @@ export class ArticulosComponent implements OnInit {
           return a.unidadMedida?.nombre ?? '';
         case 'proveedor':
           return a.proveedor?.nombre ?? '';
+        case 'iva':
+          return a.tasaIva ?? 0;
         case 'precio':
           return a.precio ?? 0;
         default:
@@ -62,8 +86,9 @@ export class ArticulosComponent implements OnInit {
     };
 
     this.dataSource.filterPredicate = (a, raw) => {
-      const { text, unidad } = JSON.parse(raw) as { text: string; unidad: string };
+      const { text, unidad, tasa } = JSON.parse(raw) as { text: string; unidad: string; tasa: FiltroTasa };
       if (unidad && a.unidadMedida?.nombre !== unidad) return false;
+      if (tasa !== '' && String(a.tasaIva) !== tasa) return false;
       if (!text) return true;
       const haystack = this.normalize(
         [a.nombre, a.descripcion, a.proveedor?.nombre, a.unidadMedida?.nombre].join(' ')
@@ -97,6 +122,7 @@ export class ArticulosComponent implements OnInit {
     const filter = JSON.stringify({
       text: this.normalize(this.search.trim()),
       unidad: this.unidad,
+      tasa: this.tasa,
     });
     this.dataSource.filter = filter;
     this.dataSource.paginator?.firstPage();
@@ -109,7 +135,61 @@ export class ArticulosComponent implements OnInit {
   limpiar(): void {
     this.search = '';
     this.unidad = '';
+    this.tasa = '';
     this.applyFilter();
+  }
+
+  nuevo(): void {
+    this.abrirFormulario({});
+  }
+
+  editar(a: Articulo): void {
+    this.abrirFormulario({ articulo: a });
+  }
+
+  eliminar(a: Articulo): void {
+    const data: ConfirmDialogData = {
+      titulo: 'Eliminar artículo',
+      mensaje: `¿Eliminar "${a.nombre}"? Esta acción no se puede deshacer. Si el artículo ya figura en alguna venta, no se podrá eliminar.`,
+      confirmar: 'Eliminar',
+      peligro: true,
+    };
+    this.dialog
+      .open(ConfirmDialogComponent, { data, width: '440px' })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (!ok) return;
+        this.eliminando.set(a.id);
+        this.service.eliminar(a.id).subscribe({
+          next: () => {
+            this.eliminando.set(null);
+            this.aviso(`Se eliminó "${a.nombre}".`);
+            this.cargar();
+          },
+          error: (e: HttpErrorResponse) => {
+            this.eliminando.set(null);
+            this.aviso(mensajeError(e, 'No se pudo eliminar el artículo.'), true);
+          },
+        });
+      });
+  }
+
+  private abrirFormulario(data: ArticuloFormData): void {
+    this.dialog
+      .open(ArticuloFormDialogComponent, { data, width: '640px', maxWidth: '95vw', autoFocus: 'first-tabbable' })
+      .afterClosed()
+      .subscribe((guardado?: Articulo) => {
+        if (!guardado) return;
+        this.aviso(data.articulo ? 'Se guardaron los cambios.' : `Se creó "${guardado.nombre}".`);
+        this.cargar();
+      });
+  }
+
+  private aviso(texto: string, error = false): void {
+    this.snack.open(texto, 'Cerrar', {
+      duration: error ? 7000 : 3500,
+      panelClass: error ? 'snack-error' : 'snack-ok',
+    });
   }
 
   /** Lowercase and strip accents so that "limon" finds "Limón". */

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_URL } from '../api.config';
-import { Articulo } from '../models/articulo.model';
+import { Articulo, ArticuloInput } from '../models/articulo.model';
 
 @Injectable({ providedIn: 'root' })
 export class ArticuloService {
@@ -11,5 +11,17 @@ export class ArticuloService {
 
   listar(): Observable<Articulo[]> {
     return this.http.get<Articulo[]>(this.url);
+  }
+
+  crear(body: ArticuloInput): Observable<Articulo> {
+    return this.http.post<Articulo>(this.url, body);
+  }
+
+  actualizar(id: number, body: ArticuloInput): Observable<Articulo> {
+    return this.http.put<Articulo>(`${this.url}/${id}`, body);
+  }
+
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${id}`);
   }
 }

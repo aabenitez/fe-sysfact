@@ -151,7 +151,7 @@
             <div>{{ v.unidades }} {{ v.unidades === 1 ? 'unidad' : 'unidades' }}</div>
             <div class="muted small items-preview" [title]="v.items + ' ítems'">
               @for (d of v.detallesVenta?.slice(0, 2); track d.id; let last = $last) {
-              {{ d.articulo?.nombre }}{{ last ? '' : ', ' }}
+              {{ d.articulo.nombre }}{{ last ? '' : ', ' }}
               }
               @if (v.items > 2) { y {{ v.items - 2 }} más }
             </div>

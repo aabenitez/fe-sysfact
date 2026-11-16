@@ -2,3 +2,13 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Snackbar feedback (MatSnackBar panelClass) */
+.mat-mdc-snack-bar-container.snack-ok {
+  --mdc-snackbar-container-color: #0f7a46;
+  --mat-snack-bar-button-color: #fff;
+}
+.mat-mdc-snack-bar-container.snack-error {
+  --mdc-snackbar-container-color: #b42318;
+  --mat-snack-bar-button-color: #fff;
+}

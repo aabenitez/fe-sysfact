@@ -1,0 +1,105 @@
+<h2 mat-dialog-title class="title">
+  <span class="title-icon"><i class="iconify" [attr.data-icon]="editando ? 'solar:pen-new-square-line-duotone' : 'solar:box-line-duotone'"></i></span>
+  {{ editando ? 'Editar artículo' : 'Nuevo artículo' }}
+</h2>
+
+<mat-dialog-content>
+  @if (cargando()) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  <p class="muted loading-text">Cargando unidades de medida y proveedores…</p>
+  } @else if (errorCarga()) {
+  <div class="alert alert--error" role="alert">{{ errorCarga() }}</div>
+  } @else {
+  <form [formGroup]="form" (ngSubmit)="guardar()" id="articulo-form" class="form" novalidate>
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="nombre" maxlength="100" cdkFocusInitial autocomplete="off" />
+      <mat-hint align="end">{{ form.controls.nombre.value.length }}/100</mat-hint>
+      @if (form.controls.nombre.hasError('required') || form.controls.nombre.hasError('pattern')) {
+      <mat-error>El nombre es obligatorio.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Descripción (opcional)</mat-label>
+      <textarea matInput formControlName="descripcion" rows="2"></textarea>
+    </mat-form-field>
+
+    <div class="frow frow--price">
+      <mat-form-field appearance="outline">
+        <mat-label>Precio de venta (Gs.)</mat-label>
+        <input matInput type="number" formControlName="precio" min="0" step="500" inputmode="numeric" />
+        @if (ivaPreview() !== null) {
+        <mat-hint>
+          {{ form.controls.tasaIva.value === 0 ? 'Sin IVA (exenta)' : 'IVA incluido: ' + formatGs(ivaPreview()) }}
+        </mat-hint>
+        }
+        @if (form.controls.precio.hasError('required')) {
+        <mat-error>El precio es obligatorio.</mat-error>
+        }
+        @if (form.controls.precio.hasError('min')) {
+        <mat-error>El precio no puede ser negativo.</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="tax">
+        <span class="tax-label" id="tasa-label">Tasa de IVA</span>
+        <mat-button-toggle-group formControlName="tasaIva" aria-labelledby="tasa-label" class="tax-toggle">
+          @for (t of tasas; track t.value) {
+          <mat-button-toggle [value]="t.value">{{ t.corto }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+      </div>
+    </div>
+
+    <div class="frow frow--half">
+      <mat-form-field appearance="outline">
+        <mat-label>Unidad de medida</mat-label>
+        <mat-select formControlName="unidadMedidaId">
+          @for (u of unidades(); track u.id) {
+          <mat-option [value]="u.id">{{ u.nombre }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.unidadMedidaId.hasError('required')) {
+        <mat-error>Elegí una unidad de medida.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Proveedor</mat-label>
+        <mat-select formControlName="proveedorId">
+          @for (p of proveedores(); track p.id) {
+          <mat-option [value]="p.id">{{ p.nombre }}</mat-option>
+          }
+        </mat-select>
+        @if (proveedores().length === 0) {
+        <mat-hint>No hay proveedores cargados.</mat-hint>
+        }
+        @if (form.controls.proveedorId.hasError('required')) {
+        <mat-error>Elegí un proveedor.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    @if (errorGuardar()) {
+    <div class="alert alert--error" role="alert">{{ errorGuardar() }}</div>
+    }
+  </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancelar()" [disabled]="guardando()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="submit"
+    form="articulo-form"
+    [disabled]="cargando() || !!errorCarga() || guardando()"
+  >
+    @if (guardando()) {
+    <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+    }
+    {{ editando ? 'Guardar cambios' : 'Crear artículo' }}
+  </button>
+</mat-dialog-actions>

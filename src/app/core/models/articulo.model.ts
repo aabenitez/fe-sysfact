@@ -9,6 +9,27 @@ export interface Proveedor {
   nombre: string;
   contacto?: string | null;
   telefono?: string | null;
+  direccion?: string | null;
+}
+
+/** IVA rate of an article: 10 %, 5 % or 0 (exempt). */
+export type TasaIva = 10 | 5 | 0;
+
+export const TASAS_IVA: { value: TasaIva; label: string; corto: string }[] = [
+  { value: 10, label: 'IVA 10 %', corto: '10 %' },
+  { value: 5, label: 'IVA 5 %', corto: '5 %' },
+  { value: 0, label: 'Exenta', corto: 'Exenta' },
+];
+
+export function tasaLabel(t: number | null | undefined): string {
+  return TASAS_IVA.find((x) => x.value === t)?.corto ?? '—';
+}
+
+/** IVA already included in a price (Paraguay): price ÷ 11 at 10 %, ÷ 21 at 5 %. */
+export function ivaIncluido(precio: number, tasa: number): number {
+  if (tasa === 10) return Math.round(precio / 11);
+  if (tasa === 5) return Math.round(precio / 21);
+  return 0;
 }
 
 /** Article as returned by GET /sysfact/articulos. */
@@ -17,7 +38,19 @@ export interface Articulo {
   nombre: string;
   descripcion: string | null;
   precio: number;
+  tasaIva: TasaIva;
   unidadMedida: UnidadMedida;
   proveedor: Proveedor;
   nombreImagen: string | null;
+}
+
+/** Body for POST/PUT /sysfact/articulos. */
+export interface ArticuloInput {
+  nombre: string;
+  descripcion: string | null;
+  precio: number;
+  tasaIva: TasaIva;
+  unidadMedida: { id: number };
+  proveedor: { id: number };
+  nombreImagen?: string | null;
 }

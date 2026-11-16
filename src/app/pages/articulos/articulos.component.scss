@@ -177,6 +177,49 @@ $border: #e0e6eb;
   white-space: nowrap;
 }
 
+.iva-hint {
+  font-size: 12px;
+  white-space: nowrap;
+  color: $muted;
+}
+
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tax {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &--10 { color: $primary; background: #eeedff; }
+  &--5 { color: #0b7ab8; background: #e5f4fc; }
+  &--0 { color: $muted; background: #eef1f5; }
+}
+
+.actions-col {
+  width: 96px;
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.action-icon {
+  font-size: 20px;
+  color: $muted;
+}
+
+button.danger:hover .action-icon {
+  color: #d92d20;
+}
+button:not(.danger):hover .action-icon {
+  color: $primary;
+}
+
 .no-match {
   padding: 32px 16px !important;
   text-align: center;
