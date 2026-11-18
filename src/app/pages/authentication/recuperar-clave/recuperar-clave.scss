@@ -1,0 +1,35 @@
+// Extra styles for the password recovery pages (they reuse the login page's layout and styles).
+
+.notice--success {
+  color: #067647;
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+}
+
+.brand-copy--short {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.links {
+  margin: 24px 0 0;
+  text-align: center;
+  font-size: 14px;
+
+  a {
+    color: #635bff;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #667085;
+}

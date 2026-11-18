@@ -231,7 +231,21 @@ $border: #e0e6eb;
 .form-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   margin: -4px 0 20px -8px;
+}
+
+.forgot-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #635bff;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .submit-btn {

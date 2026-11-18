@@ -1,0 +1,146 @@
+<div class="login-shell">
+  <aside class="brand-panel">
+    <div class="brand-glow brand-glow--one"></div>
+    <div class="brand-glow brand-glow--two"></div>
+
+    <div class="brand-top">
+      <div class="brand-mark">
+        <i class="iconify" data-icon="mdi:sprout"></i>
+      </div>
+      <div>
+        <div class="brand-name">Marithe</div>
+        <div class="brand-sub">Plantas y Cerámicas</div>
+      </div>
+    </div>
+
+    <div class="brand-copy brand-copy--short">
+      <h1>Elegí una<br />contraseña nueva.</h1>
+      <p>Usá al menos {{ minimo }} caracteres. Mejor si es una frase que solo vos conozcas.</p>
+    </div>
+
+    <div class="brand-foot">© {{ year }} Marithe Plantas y Cerámicas</div>
+  </aside>
+
+  <main class="form-panel">
+    <div class="form-wrap">
+      <div class="mobile-brand">
+        <div class="brand-mark brand-mark--sm">
+          <i class="iconify" data-icon="mdi:sprout"></i>
+        </div>
+        <span>Marithe · Sysfact</span>
+      </div>
+
+      <h2 class="form-title">Cambiar contraseña</h2>
+
+      @switch (estado()) {
+      @case ('validando') {
+      <div class="loading-state">
+        <mat-spinner diameter="22"></mat-spinner>
+        <span>Verificando el enlace…</span>
+      </div>
+      }
+
+      @case ('invalido') {
+      <div class="notice notice--error" role="alert">
+        <i class="iconify" data-icon="solar:link-broken-line-duotone"></i>
+        <span>Este enlace no es válido o ya venció. Los enlaces valen por 1 hora y se usan una sola vez.</span>
+      </div>
+      <a mat-flat-button color="primary" class="submit-btn w-100" routerLink="/olvide-contrasena">
+        Pedir un enlace nuevo
+      </a>
+      }
+
+      @case ('listo') {
+      <div class="notice notice--success" role="status">
+        <i class="iconify" data-icon="solar:check-circle-line-duotone"></i>
+        <span>Listo, tu contraseña se cambió. Ya podés ingresar con la nueva.</span>
+      </div>
+      <a mat-flat-button color="primary" class="submit-btn w-100" routerLink="/authentication/login">
+        Iniciar sesión
+      </a>
+      }
+
+      @default {
+      <p class="form-subtitle">Escribila dos veces para confirmar.</p>
+
+      @if (error()) {
+      <div class="notice notice--error" role="alert">
+        <i class="iconify" data-icon="solar:danger-triangle-line-duotone"></i>
+        <span>{{ error() }}</span>
+      </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <label class="field-label" for="password">Contraseña nueva</label>
+        <mat-form-field appearance="outline" class="w-100" color="primary">
+          <i matPrefix class="iconify field-icon" data-icon="solar:lock-password-line-duotone"></i>
+          <input
+            id="password"
+            matInput
+            [type]="hide() ? 'password' : 'text'"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hide.set(!hide())"
+            [attr.aria-label]="hide() ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+          >
+            <mat-icon>{{ hide() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+          @if (f.password.touched && f.password.hasError('required')) {
+          <mat-error>Ingresá la contraseña nueva.</mat-error>
+          } @else if (f.password.touched && f.password.hasError('minlength')) {
+          <mat-error>Tiene que tener al menos {{ minimo }} caracteres.</mat-error>
+          } @else if (f.password.touched && f.password.hasError('maxlength')) {
+          <mat-error>Es demasiado larga (máximo 100 caracteres).</mat-error>
+          }
+        </mat-form-field>
+
+        <label class="field-label" for="passwordConfirm">Repetir contraseña</label>
+        <mat-form-field appearance="outline" class="w-100" color="primary">
+          <i matPrefix class="iconify field-icon" data-icon="solar:lock-keyhole-line-duotone"></i>
+          <input
+            id="passwordConfirm"
+            matInput
+            [type]="hide() ? 'password' : 'text'"
+            formControlName="passwordConfirm"
+            autocomplete="new-password"
+          />
+          @if (f.passwordConfirm.touched && f.passwordConfirm.hasError('required')) {
+          <mat-error>Repetí la contraseña.</mat-error>
+          }
+        </mat-form-field>
+        @if (f.passwordConfirm.touched && form.hasError('distintas')) {
+        <div class="notice notice--error" role="alert">
+          <i class="iconify" data-icon="solar:danger-triangle-line-duotone"></i>
+          <span>Las contraseñas no coinciden.</span>
+        </div>
+        }
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          class="submit-btn w-100"
+          [disabled]="loading()"
+        >
+          @if (loading()) {
+          <mat-spinner diameter="20" class="btn-spinner"></mat-spinner>
+          <span>Guardando…</span>
+          } @else {
+          <span>Guardar contraseña</span>
+          }
+        </button>
+      </form>
+      }
+      }
+
+      <p class="links">
+        <a routerLink="/authentication/login">Volver a iniciar sesión</a>
+      </p>
+    </div>
+  </main>
+</div>

@@ -95,6 +95,24 @@ export const routes: Routes = [
             (m) => m.AuthenticationRoutes
           ),
       },
+      // Password recovery (public). The e-mailed link points to /cambiar-contrasena?token=...
+      // (parameter url.change.password), so these live at the top level.
+      {
+        path: 'olvide-contrasena',
+        title: 'Recuperar contraseña · Sysfact',
+        loadComponent: () =>
+          import('./pages/authentication/recuperar-clave/olvide-contrasena.component').then(
+            (m) => m.OlvideContrasenaComponent
+          ),
+      },
+      {
+        path: 'cambiar-contrasena',
+        title: 'Cambiar contraseña · Sysfact',
+        loadComponent: () =>
+          import('./pages/authentication/recuperar-clave/cambiar-contrasena.component').then(
+            (m) => m.CambiarContrasenaComponent
+          ),
+      },
     ],
   },
   {
