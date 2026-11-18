@@ -40,40 +40,87 @@
   </div>
 </div>
 
-<!-- Company logo (parameter empresa.logo) -->
+<!-- Company images: logo (parameter empresa.logo) and favicon (parameter empresa.favicon) -->
 <mat-card class="cardWithShadow logo-card">
   <mat-card-content class="p-24">
+    <!-- Logo -->
     <div class="logo-row">
-      <div class="logo-preview" [class.logo-preview--default]="!branding.isCustom()">
-        <img [src]="branding.logoUrl()" (error)="branding.markFailed()" alt="Logo actual" />
+      <div class="logo-preview" [class.logo-preview--default]="!logo.imagen.isCustom()">
+        <img [src]="logo.imagen.url()" (error)="logo.imagen.markFailed()" alt="Logo actual" />
       </div>
       <div class="logo-info">
         <h2>Logo de la empresa</h2>
         <p>
           Se muestra arriba del menú lateral. Se guarda en el parámetro <code class="code">empresa.logo</code>.
-          @if (!branding.isCustom()) {
+          @if (!logo.imagen.isCustom()) {
           <br /><span class="muted">Ahora se usa el logo predeterminado.</span>
           }
         </p>
         @if (isAdmin()) {
         <div class="logo-actions">
-          <input #logoInput type="file" [accept]="logoAccept" hidden (change)="onLogoSelected(logoInput)" />
-          <button mat-flat-button color="primary" (click)="logoInput.click()" [disabled]="logoBusy()">
+          <input #logoInput type="file" [accept]="logo.imagen.reglas.accept" hidden (change)="onImagenSelected('logo', logoInput)" />
+          <button mat-flat-button color="primary" (click)="logoInput.click()" [disabled]="logo.busy()">
             <i class="iconify icon-18 m-r-6" data-icon="solar:upload-minimalistic-line-duotone"></i>
-            {{ branding.isCustom() ? 'Cambiar logo' : 'Subir logo' }}
+            {{ logo.imagen.isCustom() ? 'Cambiar logo' : 'Subir logo' }}
           </button>
-          @if (branding.isCustom()) {
-          <button mat-stroked-button (click)="restablecerLogo()" [disabled]="logoBusy()">Usar el predeterminado</button>
+          @if (logo.imagen.isCustom()) {
+          <button mat-stroked-button (click)="restablecerImagen('logo')" [disabled]="logo.busy()">Usar el predeterminado</button>
           }
-          <span class="hint">PNG, JPG, WEBP, GIF o SVG · máx. 2 MB · mejor horizontal</span>
+          <span class="hint">{{ logo.imagen.reglas.formatos }} · máx. {{ logo.imagen.reglas.maxLabel }} · mejor horizontal</span>
         </div>
         } @else {
         <p class="hint">Solo un Administrador puede cambiar el logo.</p>
         }
-        @if (logoBusy()) {
+        @if (logo.busy()) {
         <mat-progress-bar mode="indeterminate" class="m-t-12"></mat-progress-bar>
         }
-        @if (logoMsg(); as m) {
+        @if (logo.msg(); as m) {
+        <div class="logo-msg" [class.logo-msg--error]="m.type === 'error'" role="status">{{ m.text }}</div>
+        }
+      </div>
+    </div>
+
+    <mat-divider class="imagen-divider"></mat-divider>
+
+    <!-- Favicon -->
+    <div class="logo-row">
+      <div class="logo-preview favicon-preview" [class.logo-preview--default]="!fav.imagen.isCustom()">
+        <!-- A mock browser tab, to show the icon at the size it really has. -->
+        <div class="tab-mock" aria-hidden="true">
+          <img [src]="fav.imagen.url()" (error)="fav.imagen.markFailed()" alt="" />
+          <span>Sysfact</span>
+          <i class="iconify" data-icon="mdi:close"></i>
+        </div>
+        <img class="favicon-big" [src]="fav.imagen.url()" alt="Favicon actual" />
+      </div>
+      <div class="logo-info">
+        <h2>Ícono de la pestaña (favicon)</h2>
+        <p>
+          Se muestra en la pestaña del navegador y en los marcadores. Se guarda en el parámetro
+          <code class="code">empresa.favicon</code>.
+          @if (!fav.imagen.isCustom()) {
+          <br /><span class="muted">Ahora se usa el ícono predeterminado.</span>
+          }
+        </p>
+        @if (isAdmin()) {
+        <div class="logo-actions">
+          <input #favInput type="file" [accept]="fav.imagen.reglas.accept" hidden (change)="onImagenSelected('favicon', favInput)" />
+          <button mat-flat-button color="primary" (click)="favInput.click()" [disabled]="fav.busy()">
+            <i class="iconify icon-18 m-r-6" data-icon="solar:upload-minimalistic-line-duotone"></i>
+            {{ fav.imagen.isCustom() ? 'Cambiar favicon' : 'Subir favicon' }}
+          </button>
+          @if (fav.imagen.isCustom()) {
+          <button mat-stroked-button (click)="restablecerImagen('favicon')" [disabled]="fav.busy()">Usar el predeterminado</button>
+          }
+          <span class="hint">{{ fav.imagen.reglas.formatos }} · máx. {{ fav.imagen.reglas.maxLabel }} · cuadrado, idealmente 64×64 o más</span>
+        </div>
+        } @else {
+        <p class="hint">Solo un Administrador puede cambiar el favicon.</p>
+        }
+        @if (fav.busy()) {
+        <mat-progress-bar mode="indeterminate" class="m-t-12"></mat-progress-bar>
+        }
+        @if (fav.msg(); as m) {
         <div class="logo-msg" [class.logo-msg--error]="m.type === 'error'" role="status">{{ m.text }}</div>
         }
       </div>

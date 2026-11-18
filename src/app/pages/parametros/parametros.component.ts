@@ -1,5 +1,14 @@
-import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  WritableSignal,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -8,9 +17,19 @@ import { MaterialModule } from '../../material.module';
 import { Parametro } from '../../core/models/parametro.model';
 import { ParametroService } from '../../core/services/parametro.service';
 import { AuthService } from '../../core/auth/auth.service';
-import { BrandingService, LOGO_ACCEPT } from '../../core/branding/branding.service';
+import { BrandingService, ImagenEmpresa } from '../../core/branding/branding.service';
 
 type Estado = '' | 'activos' | 'inactivos';
+type TipoImagen = 'logo' | 'favicon';
+
+interface ImagenCard {
+  imagen: ImagenEmpresa;
+  /** Used in messages: "No se pudo guardar el logo." */
+  nombre: string;
+  busy: WritableSignal<boolean>;
+  msg: WritableSignal<{ type: 'ok' | 'error'; text: string } | null>;
+  onChange?: () => void;
+}
 
 /** Codes whose value must not be shown on screen unless the user asks for it. */
 const SENSITIVE = /(password|pass|secret|token|clave|key)/i;
@@ -27,10 +46,27 @@ export class ParametrosComponent implements OnInit {
   private readonly auth = inject(AuthService);
   readonly branding = inject(BrandingService);
 
-  readonly logoAccept = LOGO_ACCEPT;
   readonly isAdmin = computed(() => this.auth.user()?.rol?.nombre === 'Administrador');
-  readonly logoBusy = signal(false);
-  readonly logoMsg = signal<{ type: 'ok' | 'error'; text: string } | null>(null);
+
+  /** The company images editable on this page: the header logo and the browser-tab favicon. */
+  readonly imagenes: Record<TipoImagen, ImagenCard> = {
+    logo: {
+      imagen: this.branding.logo,
+      nombre: 'el logo',
+      busy: signal(false),
+      msg: signal(null),
+    },
+    favicon: {
+      imagen: this.branding.favicon,
+      nombre: 'el favicon',
+      busy: signal(false),
+      msg: signal(null),
+      // The browser tab only changes when the <link rel="icon"> is replaced.
+      onChange: () => this.branding.applyFavicon(),
+    },
+  };
+  readonly logo = this.imagenes.logo;
+  readonly fav = this.imagenes.favicon;
 
   readonly columns = ['codigo', 'descripcion', 'valor', 'activo'];
   readonly dataSource = new MatTableDataSource<Parametro>([]);
@@ -122,55 +158,50 @@ export class ParametrosComponent implements OnInit {
     this.applyFilter();
   }
 
-  onLogoSelected(input: HTMLInputElement): void {
+  onImagenSelected(tipo: TipoImagen, input: HTMLInputElement): void {
+    const card = this.imagenes[tipo];
     const file = input.files?.[0];
     input.value = ''; // allow choosing the same file again
     if (!file) return;
 
-    const invalid = this.branding.validate(file);
+    const invalid = card.imagen.validate(file);
     if (invalid) {
-      this.logoMsg.set({ type: 'error', text: invalid });
+      card.msg.set({ type: 'error', text: invalid });
       return;
     }
-    this.logoBusy.set(true);
-    this.logoMsg.set(null);
-    this.branding.upload(file).subscribe({
+    this.run(card, card.imagen.upload(file), `Se actualizó ${card.nombre}.`);
+  }
+
+  restablecerImagen(tipo: TipoImagen): void {
+    const card = this.imagenes[tipo];
+    this.run(card, card.imagen.reset(), `Se volvió a usar ${card.nombre} predeterminado.`);
+  }
+
+  private run(card: ImagenCard, request: Observable<unknown>, ok: string): void {
+    card.busy.set(true);
+    card.msg.set(null);
+    request.subscribe({
       next: () => {
-        this.logoBusy.set(false);
-        this.logoMsg.set({ type: 'ok', text: 'Logo actualizado.' });
+        card.busy.set(false);
+        card.msg.set({ type: 'ok', text: ok });
+        card.onChange?.();
         this.cargar();
       },
       error: (e: HttpErrorResponse) => {
-        this.logoBusy.set(false);
-        this.logoMsg.set({ type: 'error', text: this.uploadError(e) });
+        card.busy.set(false);
+        card.msg.set({ type: 'error', text: this.uploadError(e, card.nombre) });
       },
     });
   }
 
-  restablecerLogo(): void {
-    this.logoBusy.set(true);
-    this.logoMsg.set(null);
-    this.branding.reset().subscribe({
-      next: () => {
-        this.logoBusy.set(false);
-        this.logoMsg.set({ type: 'ok', text: 'Se volvió al logo predeterminado.' });
-        this.cargar();
-      },
-      error: (e: HttpErrorResponse) => {
-        this.logoBusy.set(false);
-        this.logoMsg.set({ type: 'error', text: this.uploadError(e) });
-      },
-    });
-  }
-
-  private uploadError(e: HttpErrorResponse): string {
-    if (e.status === 403) return 'Solo un Administrador puede cambiar el logo.';
+  private uploadError(e: HttpErrorResponse, nombre: string): string {
+    if (e.status === 403) return `Solo un Administrador puede cambiar ${nombre}.`;
     if (e.status === 413) return 'La imagen es demasiado grande.';
     if (e.status === 0) return 'No se pudo conectar con el servidor.';
     // Business rule errors come in error[0]; storage errors in mensaje.
     return e.error?.error?.[0] && e.status === 409
       ? e.error.error[0]
-      : e.error?.mensaje ?? 'No se pudo guardar el logo.';
+      : e.error?.mensaje ?? `No se pudo guardar ${nombre}.`;
   }
 
   isActivo(p: Parametro): boolean {

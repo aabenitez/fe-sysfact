@@ -113,6 +113,44 @@ $muted: #707a82;
   }
 }
 
+.imagen-divider {
+  margin: 24px 0;
+}
+
+// The favicon preview shows a mock browser tab (real 16px size) and a big copy of the icon.
+.favicon-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 16px;
+
+  img.favicon-big {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+.tab-mock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px 10px 0 0;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(17, 28, 45, 0.15);
+  font-size: 12px;
+  color: $ink;
+
+  img {
+    width: 16px;
+    height: 16px;
+  }
+  i {
+    font-size: 12px;
+    color: $muted;
+  }
+}
+
 .logo-info {
   flex: 1 1 320px;
   min-width: 0;
