@@ -58,7 +58,8 @@ export class VentasComponent implements OnInit {
 
   search = '';
   condicion: Condicion = '';
-  estado: Estado = '';
+  /** Roles that manage sales (Administrador, Cajero) see issued and cancelled ones by default; others only issued. */
+  estado: Estado = this.estadoPorDefecto();
   periodo: Periodo = '';
 
   readonly periodos: { value: Periodo; label: string }[] = [
@@ -199,9 +200,13 @@ export class VentasComponent implements OnInit {
   limpiar(): void {
     this.search = '';
     this.condicion = '';
-    this.estado = '';
+    this.estado = this.estadoPorDefecto();
     this.periodo = '';
     this.applyFilter();
+  }
+
+  private estadoPorDefecto(): Estado {
+    return puedeVender(this.auth.rol()) ? '' : 'EMITIDA';
   }
 
   nueva(): void {
