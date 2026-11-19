@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
-import { adminGuard, authGuard } from './core/auth/auth.guard';
+import { adminGuard, authGuard, rolGuard } from './core/auth/auth.guard';
+import { ROLES_CATALOGO, ROLES_VENTAS } from './core/auth/permisos';
 
 export const routes: Routes = [
   {
@@ -27,6 +28,20 @@ export const routes: Routes = [
           import('./pages/ventas/ventas.component').then((m) => m.VentasComponent),
       },
       {
+        path: 'ventas/nueva',
+        title: 'Nueva venta · Sysfact',
+        canActivate: [rolGuard(...ROLES_VENTAS)],
+        loadComponent: () =>
+          import('./pages/ventas/venta-form.component').then((m) => m.VentaFormComponent),
+      },
+      {
+        path: 'ventas/:id/editar',
+        title: 'Editar factura · Sysfact',
+        canActivate: [rolGuard(...ROLES_VENTAS)],
+        loadComponent: () =>
+          import('./pages/ventas/venta-form.component').then((m) => m.VentaFormComponent),
+      },
+      {
         path: 'ventas/:id',
         title: 'Factura · Sysfact',
         loadComponent: () =>
@@ -47,12 +62,14 @@ export const routes: Routes = [
       {
         path: 'proveedores',
         title: 'Proveedores · Sysfact',
+        canActivate: [rolGuard(...ROLES_CATALOGO)],
         loadComponent: () =>
           import('./pages/proveedores/proveedores.component').then((m) => m.ProveedoresComponent),
       },
       {
         path: 'unidades-de-medida',
         title: 'Unidades de medida · Sysfact',
+        canActivate: [rolGuard(...ROLES_CATALOGO)],
         loadComponent: () =>
           import('./pages/unidades-medida/unidades-medida.component').then(
             (m) => m.UnidadesMedidaComponent
@@ -61,6 +78,7 @@ export const routes: Routes = [
       {
         path: 'parametros',
         title: 'Parámetros · Sysfact',
+        canActivate: [rolGuard(...ROLES_CATALOGO)],
         loadComponent: () =>
           import('./pages/parametros/parametros.component').then((m) => m.ParametrosComponent),
       },
@@ -70,6 +88,13 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () =>
           import('./pages/usuarios/usuarios.component').then((m) => m.UsuariosComponent),
+      },
+      {
+        path: 'auditoria',
+        title: 'Auditoría · Sysfact',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./pages/auditoria/auditoria.component').then((m) => m.AuditoriaComponent),
       },
     ],
   },

@@ -1,0 +1,267 @@
+<!-- Header -->
+<div class="page-head">
+  <div>
+    <a mat-button class="back" (click)="cancelar()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:arrow-left-line-duotone"></i>
+      {{ editando() ? 'Volver a la factura' : 'Volver a ventas' }}
+    </a>
+    <h1>{{ editando() ? 'Editar factura N.º ' + numeroFactura(original()!.id) : 'Nueva venta' }}</h1>
+    @if (editando()) {
+    <p>Emitida el {{ original()!.fecha | date: "d/MM/y 'a las' HH:mm" }}. Los cambios quedan registrados en el historial.</p>
+    } @else {
+    <p>Elegí el cliente, agregá los artículos y emití la factura.</p>
+    }
+  </div>
+</div>
+
+@if (loading()) {
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    @for (i of [1, 2, 3]; track i) {
+    <div class="skeleton-row"></div>
+    }
+  </mat-card-content>
+</mat-card>
+} @else if (error()) {
+<mat-card class="cardWithShadow">
+  <mat-card-content class="state">
+    <i class="iconify state-icon state-icon--error" data-icon="solar:danger-triangle-line-duotone"></i>
+    <h3>{{ error() }}</h3>
+    <div class="state-actions">
+      <a mat-stroked-button routerLink="/ventas">Ver ventas</a>
+      <button mat-flat-button color="primary" (click)="cargar()">Reintentar</button>
+    </div>
+  </mat-card-content>
+</mat-card>
+} @else if (bloqueo()) {
+<mat-card class="cardWithShadow">
+  <mat-card-content class="state">
+    <i class="iconify state-icon" data-icon="solar:lock-keyhole-minimalistic-line-duotone"></i>
+    <h3>{{ bloqueo() }}</h3>
+    <div class="state-actions">
+      <button mat-flat-button color="primary" (click)="cancelar()">Volver a la factura</button>
+    </div>
+  </mat-card-content>
+</mat-card>
+} @else {
+<div class="layout">
+  <div class="main">
+    <!-- Client and terms -->
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <h2 class="section-title">
+          <span class="step">1</span>
+          Cliente y condición
+        </h2>
+
+        <div class="cliente-row">
+          <mat-form-field appearance="outline" class="cliente-field" subscriptSizing="dynamic">
+            <mat-label>Cliente</mat-label>
+            <input
+              matInput
+              [ngModel]="busquedaCliente()"
+              (ngModelChange)="onBusquedaCliente($event)"
+              [matAutocomplete]="autoCliente"
+              placeholder="Buscar por nombre o CI/RUC…"
+              autocomplete="off"
+            />
+            @if (busquedaCliente()) {
+            <button mat-icon-button matSuffix type="button" (click)="quitarCliente()" aria-label="Quitar cliente">
+              <mat-icon>close</mat-icon>
+            </button>
+            }
+            <mat-autocomplete #autoCliente="matAutocomplete" (optionSelected)="elegirCliente($event)">
+              @for (c of clientesFiltrados(); track c.id) {
+              <mat-option [value]="c">
+                <span class="opt-main">{{ c.nombres.trim() }} {{ c.apellidos.trim() }}</span>
+                <span class="opt-sub">CI/RUC {{ c.ciRuc }}</span>
+              </mat-option>
+              } @empty {
+              <mat-option disabled>Ningún cliente coincide. Podés crearlo con "Nuevo cliente".</mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <button mat-stroked-button color="primary" type="button" class="nuevo-cliente" (click)="nuevoCliente()">
+            <i class="iconify icon-18 m-r-6" data-icon="solar:user-plus-rounded-line-duotone"></i>
+            Nuevo cliente
+          </button>
+        </div>
+        <p class="hint">
+          @if (cliente()) {
+          <i class="iconify ok" data-icon="solar:check-circle-line-duotone"></i> Facturando a
+          <strong>{{ cliente()!.nombres.trim() }} {{ cliente()!.apellidos.trim() }}</strong>.
+          } @else {
+          Sin cliente la factura sale a nombre de "Sin cliente" (solo al contado).
+          }
+        </p>
+
+        <div class="condicion">
+          <span class="label">Condición</span>
+          <mat-button-toggle-group
+            [value]="condicion()"
+            (change)="condicion.set($event.value)"
+            aria-label="Condición de venta"
+            hideSingleSelectionIndicator
+          >
+            <mat-button-toggle value="CON">Contado</mat-button-toggle>
+            <mat-button-toggle value="CRE">Crédito</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Lines -->
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <h2 class="section-title">
+          <span class="step">2</span>
+          Artículos
+        </h2>
+
+        <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
+          <i matPrefix class="iconify field-icon" data-icon="solar:magnifer-line-duotone"></i>
+          <input
+            #buscador
+            matInput
+            [ngModel]="busquedaArticulo()"
+            (ngModelChange)="busquedaArticulo.set($event)"
+            [matAutocomplete]="autoArticulo"
+            placeholder="Agregar artículo: escribí el nombre…"
+            autocomplete="off"
+            aria-label="Agregar artículo"
+          />
+          <mat-autocomplete #autoArticulo="matAutocomplete" (optionSelected)="agregarArticulo($event, buscador)">
+            @for (a of articulosFiltrados(); track a.id) {
+            <mat-option [value]="a">
+              <span class="opt-main">{{ a.nombre }}</span>
+              <span class="opt-sub">{{ formatGs(a.precio) }} · {{ tasaLabel(a.tasaIva) }}</span>
+            </mat-option>
+            } @empty {
+            <mat-option disabled>Ningún artículo coincide.</mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+
+        @if (lineas().length === 0) {
+        <div class="empty-lines">
+          <i class="iconify" data-icon="solar:cart-large-minimalistic-line-duotone"></i>
+          <span>Todavía no agregaste artículos.</span>
+        </div>
+        } @else {
+        <div class="table-wrap">
+          <table class="lines">
+            <thead>
+              <tr>
+                <th>Artículo</th>
+                <th class="qty">Cant.</th>
+                <th class="num">Precio unit.</th>
+                <th class="num">Descuento</th>
+                <th class="num">Importe</th>
+                <th class="del"><span class="cdk-visually-hidden">Quitar</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (l of lineas(); track l.articulo.id; let i = $index) {
+              <tr>
+                <td>
+                  <div class="item-name">{{ l.articulo.nombre }}</div>
+                  <div class="muted small">IVA {{ tasaLabel(l.articulo.tasaIva) }}</div>
+                </td>
+                <td class="qty">
+                  <input
+                    class="cell-input"
+                    type="number"
+                    min="1"
+                    step="1"
+                    [ngModel]="l.cantidad"
+                    (ngModelChange)="cambiar(i, 'cantidad', $event)"
+                    [attr.aria-label]="'Cantidad de ' + l.articulo.nombre"
+                  />
+                </td>
+                <td class="num">
+                  @if (esAdmin()) {
+                  <input
+                    class="cell-input cell-input--money"
+                    type="number"
+                    min="0"
+                    step="500"
+                    [ngModel]="l.precio"
+                    (ngModelChange)="cambiar(i, 'precio', $event)"
+                    [attr.aria-label]="'Precio de ' + l.articulo.nombre"
+                  />
+                  @if (precioCambiado(l)) {
+                  <div class="muted small">Lista: {{ formatGs(l.articulo.precio) }}</div>
+                  }
+                  } @else {
+                  <span matTooltip="Solo un Administrador puede cambiar el precio.">{{ formatGs(l.precio) }}</span>
+                  }
+                </td>
+                <td class="num">
+                  <input
+                    class="cell-input cell-input--money"
+                    type="number"
+                    min="0"
+                    step="500"
+                    [ngModel]="l.descuento"
+                    (ngModelChange)="cambiar(i, 'descuento', $event)"
+                    [attr.aria-label]="'Descuento de ' + l.articulo.nombre"
+                  />
+                </td>
+                <td class="num strong">{{ formatGs(importe(l)) }}</td>
+                <td class="del">
+                  <button mat-icon-button type="button" class="danger" (click)="quitar(i)" [attr.aria-label]="'Quitar ' + l.articulo.nombre">
+                    <i class="iconify action-icon" data-icon="solar:trash-bin-minimalistic-line-duotone"></i>
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Summary -->
+  <aside class="side">
+    <mat-card class="cardWithShadow summary">
+      <mat-card-content class="p-24">
+        <h2 class="section-title">Resumen</h2>
+        <div class="srow"><span>{{ unidades() }} {{ unidades() === 1 ? 'unidad' : 'unidades' }}</span><span></span></div>
+        <div class="srow"><span>Subtotal</span><span>{{ formatGs(subtotal()) }}</span></div>
+        @if (totalDescuento()) {
+        <div class="srow discount"><span>Descuentos</span><span>− {{ formatGs(totalDescuento()) }}</span></div>
+        }
+        <div class="srow grand"><span>Total</span><span>{{ formatGs(total()) }}</span></div>
+        <div class="tax">
+          <div class="srow"><span>IVA 10 % incluido</span><span>{{ formatGs(iva10()) }}</span></div>
+          <div class="srow"><span>IVA 5 % incluido</span><span>{{ formatGs(iva5()) }}</span></div>
+        </div>
+
+        @if (errorGuardar()) {
+        <div class="alert" role="alert">{{ errorGuardar() }}</div>
+        } @else if (problema() && lineas().length > 0) {
+        <div class="note">{{ problema() }}</div>
+        }
+
+        <button
+          mat-flat-button
+          color="primary"
+          class="save"
+          (click)="guardar()"
+          [disabled]="!!problema() || guardando()"
+        >
+          @if (guardando()) {
+          <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+          }
+          {{ editando() ? 'Guardar cambios' : 'Emitir factura' }}
+        </button>
+        <button mat-button class="cancel" (click)="cancelar()" [disabled]="guardando()">Cancelar</button>
+      </mat-card-content>
+    </mat-card>
+  </aside>
+</div>
+}

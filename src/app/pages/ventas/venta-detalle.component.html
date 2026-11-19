@@ -5,12 +5,36 @@
     Volver a ventas
   </a>
   @if (venta()) {
-  <button mat-flat-button color="primary" (click)="imprimir()">
-    <i class="iconify icon-18 m-r-6" data-icon="solar:printer-minimalistic-line-duotone"></i>
-    Imprimir
-  </button>
+  <div class="toolbar-actions">
+    @if (puedeVender()) {
+    <span [matTooltip]="bloqueo() ?? ''">
+      <button mat-stroked-button color="warn" (click)="anular()" [disabled]="!!bloqueo()">
+        <i class="iconify icon-18 m-r-6" data-icon="solar:close-circle-line-duotone"></i>
+        Anular
+      </button>
+    </span>
+    <span [matTooltip]="bloqueo() ?? ''">
+      <button mat-stroked-button color="primary" (click)="editar()" [disabled]="!!bloqueo()">
+        <i class="iconify icon-18 m-r-6" data-icon="solar:pen-new-square-line-duotone"></i>
+        Editar
+      </button>
+    </span>
+    }
+    <button mat-flat-button color="primary" (click)="imprimir()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:printer-minimalistic-line-duotone"></i>
+      Imprimir
+    </button>
+  </div>
   }
 </div>
+
+@if (aviso()) {
+<div class="aviso no-print" role="status">
+  <i class="iconify" data-icon="solar:check-circle-line-duotone"></i>
+  <span>{{ aviso() }}</span>
+  <button mat-icon-button (click)="aviso.set(null)" aria-label="Cerrar aviso"><mat-icon>close</mat-icon></button>
+</div>
+}
 
 @if (loading()) {
 <mat-card class="cardWithShadow">
@@ -35,7 +59,19 @@
   </mat-card-content>
 </mat-card>
 } @else { @if (venta(); as v) {
-<mat-card class="cardWithShadow invoice">
+@if (anulada()) {
+<div class="anulada-banner" role="note">
+  <i class="iconify" data-icon="solar:close-circle-line-duotone"></i>
+  <div>
+    <strong>Factura anulada</strong>
+    <span>el {{ v.anulacionFecha | date: "d/MM/y 'a las' HH:mm" }}@if (v.anulacionUsuario) { por {{ v.anulacionUsuario.nombres }} {{ v.anulacionUsuario.apellidos }}}. No suma en los totales.</span>
+    @if (v.anulacionMotivo) {
+    <span class="motivo">Motivo: {{ v.anulacionMotivo }}</span>
+    }
+  </div>
+</div>
+}
+<mat-card class="cardWithShadow invoice" [class.invoice--anulada]="anulada()">
   <mat-card-content class="invoice-body">
     <!-- Header -->
     <header class="inv-head">
@@ -46,6 +82,9 @@
         <span class="inv-kind">Factura</span>
         <span class="inv-number">N.º {{ numeroFactura(v.id) }}</span>
         <span class="pill" [class.pill--credit]="v.condicionVenta === 'CRE'">{{ condicionLabel(v.condicionVenta) }}</span>
+        @if (anulada()) {
+        <span class="pill pill--anulada">Anulada</span>
+        }
       </div>
     </header>
 
@@ -133,6 +172,44 @@
         <div class="row grand"><span>Total a pagar</span><span>{{ formatGs(v.totalFactura) }}</span></div>
       </div>
     </section>
+    @if (anulada()) {
+    <div class="watermark" aria-hidden="true">ANULADA</div>
+    }
+  </mat-card-content>
+</mat-card>
+
+<!-- Change history (not printed) -->
+<mat-card class="cardWithShadow no-print historial">
+  <mat-card-content class="p-24">
+    <h2 class="hist-title">
+      <i class="iconify" data-icon="solar:history-line-duotone"></i>
+      Historial
+    </h2>
+    @if (historialError()) {
+    <p class="muted">No se pudo cargar el historial. <button mat-button color="primary" (click)="cargarHistorial(v.id)">Reintentar</button></p>
+    } @else if (historial() === null) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    } @else if (historial()!.length === 0) {
+    <p class="muted">Sin cambios registrados. Las facturas emitidas antes de activar el registro de cambios no tienen historial.</p>
+    } @else {
+    <ol class="timeline">
+      @for (h of historial(); track h.id) {
+      <li [class]="'tl tl--' + h.accion.toLowerCase()">
+        <span class="tl-icon"><i class="iconify" [attr.data-icon]="accionIcon(h.accion)"></i></span>
+        <div class="tl-body">
+          <div class="tl-head">
+            <strong>{{ accionLabel(h.accion) }}</strong>
+            <span>{{ h.usuarioNombre }}@if (h.usuarioRol) {<span class="muted"> · {{ h.usuarioRol }}</span>}</span>
+            <span class="muted tl-date">{{ h.fecha | date: "d/MM/y HH:mm" }}</span>
+          </div>
+          @if (h.detalle) {
+          <div class="tl-detail">{{ h.detalle }}</div>
+          }
+        </div>
+      </li>
+      }
+    </ol>
+    }
   </mat-card-content>
 </mat-card>
 } }

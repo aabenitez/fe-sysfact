@@ -4,10 +4,18 @@
     <h1>Ventas</h1>
     <p>Facturas emitidas. Hacé clic en una para ver el detalle.</p>
   </div>
-  <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
-    <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
-    Actualizar
-  </button>
+  <div class="head-actions">
+    <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+      Actualizar
+    </button>
+    @if (puedeVender()) {
+    <button mat-flat-button color="primary" (click)="nueva()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:cart-plus-line-duotone"></i>
+      Nueva venta
+    </button>
+    }
+  </div>
 </div>
 
 <!-- Summary (follows the filters) -->
@@ -23,12 +31,17 @@
     <span class="stat-icon stat-icon--green"><i class="iconify" data-icon="solar:document-text-line-duotone"></i></span>
     <div>
       <div class="stat-value">
-        {{ loading() ? '—' : filtradas().length }}
-        @if (!loading() && filtradas().length > 0) {
+        {{ loading() ? '—' : vigentes().length }}
+        @if (!loading() && vigentes().length > 0) {
         <small>· promedio {{ formatGs(ticketPromedio()) }}</small>
         }
       </div>
-      <div class="stat-label">Facturas</div>
+      <div class="stat-label">
+        Facturas
+        @if (!loading() && anuladas() > 0) {
+        <span class="anuladas-note">· {{ anuladas() }} {{ anuladas() === 1 ? 'anulada' : 'anuladas' }} (no suman)</span>
+        }
+      </div>
     </div>
   </div>
   <div class="stat stat--split">
@@ -81,6 +94,14 @@
           <mat-option value="CRE">Crédito</mat-option>
         </mat-select>
       </mat-form-field>
+
+      <mat-form-field appearance="outline" class="condicion" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="estado" (ngModelChange)="applyFilter()" aria-label="Filtrar por estado">
+          <mat-option value="">Emitidas y anuladas</mat-option>
+          <mat-option value="EMITIDA">Solo emitidas</mat-option>
+          <mat-option value="ANULADA">Solo anuladas</mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
 
     @if (loading()) {
@@ -100,6 +121,9 @@
       <i class="iconify state-icon" data-icon="solar:document-text-line-duotone"></i>
       <h3>Todavía no hay ventas</h3>
       <p>Cuando se emitan facturas, van a aparecer acá.</p>
+      @if (puedeVender()) {
+      <button mat-flat-button color="primary" (click)="nueva()">Cargar la primera venta</button>
+      }
     </div>
     } @else {
     <div class="result-info">
@@ -111,7 +135,7 @@
         <ng-container matColumnDef="numero">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>N.º</th>
           <td mat-cell *matCellDef="let v">
-            <span class="doc">{{ v.numero }}</span>
+            <span class="doc" [class.doc--anulada]="v.anulada">{{ v.numero }}</span>
           </td>
         </ng-container>
 
@@ -141,7 +165,11 @@
         <ng-container matColumnDef="condicion">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Condición</th>
           <td mat-cell *matCellDef="let v">
+            @if (v.anulada) {
+            <span class="pill pill--anulada" [matTooltip]="v.anulacionMotivo ? 'Motivo: ' + v.anulacionMotivo : ''">Anulada</span>
+            } @else {
             <span class="pill" [class.pill--credit]="v.condicionVenta === 'CRE'">{{ condicionLabel(v.condicionVenta) }}</span>
+            }
           </td>
         </ng-container>
 
@@ -161,7 +189,7 @@
         <ng-container matColumnDef="total">
           <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="num">Total</th>
           <td mat-cell *matCellDef="let v" class="num">
-            <div class="total">{{ formatGs(v.totalFactura) }}</div>
+            <div class="total" [class.total--anulada]="v.anulada">{{ formatGs(v.totalFactura) }}</div>
             <div class="muted small">por {{ v.vendedorTexto }}</div>
           </td>
         </ng-container>
@@ -171,6 +199,7 @@
           mat-row
           *matRowDef="let row; columns: columns"
           class="clickable"
+          [class.row--anulada]="row.anulada"
           tabindex="0"
           (click)="abrir(row)"
           (keydown.enter)="abrir(row)"

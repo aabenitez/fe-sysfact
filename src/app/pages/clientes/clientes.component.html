@@ -9,7 +9,7 @@
       <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
       Actualizar
     </button>
-    @if (isAdmin()) {
+    @if (puedeCrear()) {
     <button mat-flat-button color="primary" (click)="nuevo()">
       <i class="iconify icon-18 m-r-6" data-icon="solar:user-plus-rounded-line-duotone"></i>
       Nuevo cliente

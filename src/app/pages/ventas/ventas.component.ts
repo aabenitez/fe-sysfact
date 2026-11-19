@@ -16,8 +16,11 @@ import {
 } from '../../core/models/venta.model';
 import { VentaService } from '../../core/services/venta.service';
 import { formatGs } from '../../core/format';
+import { AuthService } from '../../core/auth/auth.service';
+import { puedeVender } from '../../core/auth/permisos';
 
 type Condicion = '' | 'CON' | 'CRE';
+type Estado = '' | 'EMITIDA' | 'ANULADA';
 type Periodo = '' | 'hoy' | '7d' | '30d' | 'mes' | 'mes-anterior' | 'anio';
 
 interface VentaFila extends Venta {
@@ -27,6 +30,7 @@ interface VentaFila extends Venta {
   items: number;
   unidades: number;
   fechaMs: number;
+  anulada: boolean;
 }
 
 @Component({
@@ -39,6 +43,9 @@ interface VentaFila extends Venta {
 export class VentasComponent implements OnInit {
   private readonly service = inject(VentaService);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+
+  readonly puedeVender = computed(() => puedeVender(this.auth.rol()));
 
   readonly columns = ['numero', 'fecha', 'cliente', 'condicion', 'items', 'total'];
   readonly dataSource = new MatTableDataSource<VentaFila>([]);
@@ -51,6 +58,7 @@ export class VentasComponent implements OnInit {
 
   search = '';
   condicion: Condicion = '';
+  estado: Estado = '';
   periodo: Periodo = '';
 
   readonly periodos: { value: Periodo; label: string }[] = [
@@ -63,20 +71,24 @@ export class VentasComponent implements OnInit {
     { value: 'anio', label: 'Este año' },
   ];
 
+  /** Filtered sales that count: cancelled ones never add to the totals. */
+  readonly vigentes = computed(() => this.filtradas().filter((v) => !v.anulada));
+  readonly anuladas = computed(() => this.filtradas().length - this.vigentes().length);
+
   readonly totalFacturado = computed(() =>
-    this.filtradas().reduce((acc, v) => acc + (v.totalFactura ?? 0), 0)
+    this.vigentes().reduce((acc, v) => acc + (v.totalFactura ?? 0), 0)
   );
   readonly ticketPromedio = computed(() =>
-    this.filtradas().length ? this.totalFacturado() / this.filtradas().length : 0
+    this.vigentes().length ? this.totalFacturado() / this.vigentes().length : 0
   );
   readonly totalContado = computed(() =>
-    this.filtradas().filter((v) => v.condicionVenta === 'CON').reduce((a, v) => a + (v.totalFactura ?? 0), 0)
+    this.vigentes().filter((v) => v.condicionVenta === 'CON').reduce((a, v) => a + (v.totalFactura ?? 0), 0)
   );
   readonly totalCredito = computed(() =>
-    this.filtradas().filter((v) => v.condicionVenta === 'CRE').reduce((a, v) => a + (v.totalFactura ?? 0), 0)
+    this.vigentes().filter((v) => v.condicionVenta === 'CRE').reduce((a, v) => a + (v.totalFactura ?? 0), 0)
   );
   readonly totalIva = computed(() =>
-    this.filtradas().reduce((a, v) => a + (v.totalIva5 ?? 0) + (v.totalIva10 ?? 0), 0)
+    this.vigentes().reduce((a, v) => a + (v.totalIva5 ?? 0) + (v.totalIva10 ?? 0), 0)
   );
   /** Share of cash sales, 0–100, for the split bar. */
   readonly porcentajeContado = computed(() => {
@@ -114,13 +126,16 @@ export class VentasComponent implements OnInit {
     };
 
     this.dataSource.filterPredicate = (v, raw) => {
-      const { text, condicion, desde, hasta } = JSON.parse(raw) as {
+      const { text, condicion, estado, desde, hasta } = JSON.parse(raw) as {
         text: string;
         condicion: Condicion;
+        estado: Estado;
         desde: number | null;
         hasta: number | null;
       };
       if (condicion && v.condicionVenta !== condicion) return false;
+      if (estado === 'ANULADA' && !v.anulada) return false;
+      if (estado === 'EMITIDA' && v.anulada) return false;
       if (desde !== null && v.fechaMs < desde) return false;
       if (hasta !== null && v.fechaMs >= hasta) return false;
       if (!text) return true;
@@ -149,6 +164,7 @@ export class VentasComponent implements OnInit {
           items: v.detallesVenta?.length ?? 0,
           unidades: (v.detallesVenta ?? []).reduce((a, d) => a + (d.cantidad ?? 0), 0),
           fechaMs: new Date(v.fecha).getTime(),
+          anulada: v.estado === 'ANULADA',
         }));
         this.ventas.set(filas);
         this.dataSource.data = filas;
@@ -171,6 +187,7 @@ export class VentasComponent implements OnInit {
     const filter = JSON.stringify({
       text: this.normalize(this.search.trim()),
       condicion: this.condicion,
+      estado: this.estado,
       desde,
       hasta,
     });
@@ -182,8 +199,13 @@ export class VentasComponent implements OnInit {
   limpiar(): void {
     this.search = '';
     this.condicion = '';
+    this.estado = '';
     this.periodo = '';
     this.applyFilter();
+  }
+
+  nueva(): void {
+    this.router.navigate(['/ventas', 'nueva']);
   }
 
   abrir(v: VentaFila): void {

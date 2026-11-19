@@ -332,3 +332,29 @@ $credit: #c27803;
     flex: 1 1 45%;
   }
 }
+
+/* ---------------- New sale, cancelled sales ---------------- */
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.anuladas-note {
+  color: #b42318;
+}
+
+.pill--anulada {
+  color: #b42318 !important;
+  background: #fef3f2 !important;
+}
+
+.doc--anulada,
+.total--anulada {
+  text-decoration: line-through;
+  color: $muted !important;
+}
+
+.row--anulada td {
+  background: #fcfcfd;
+}

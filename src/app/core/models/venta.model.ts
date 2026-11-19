@@ -2,6 +2,7 @@ import { Cliente } from './cliente.model';
 import { Articulo } from './articulo.model';
 
 export type CondicionVenta = 'CON' | 'CRE';
+export type EstadoVenta = 'EMITIDA' | 'ANULADA';
 
 export interface Vendedor {
   id: number;
@@ -35,6 +36,35 @@ export interface Venta {
   cliente: Cliente | null;
   usuario: Vendedor | null;
   detallesVenta: DetalleVenta[] | null;
+  /** Cancelled sales are kept (with their number) and do not count in totals. */
+  estado: EstadoVenta;
+  anulacionFecha: string | null;
+  anulacionUsuario: Pick<Vendedor, 'id' | 'nombres' | 'apellidos'> | null;
+  anulacionMotivo: string | null;
+}
+
+/** Body for POST /ventas and PUT /ventas/{id}. IVA and totals are computed by the backend. */
+export interface VentaInput {
+  condicionVenta: CondicionVenta;
+  cliente: { id: number } | null;
+  detallesVenta: {
+    articulo: { id: number };
+    cantidad: number;
+    precioVenta: number;
+    descuento: number;
+  }[];
+}
+
+export function estaAnulada(v: Pick<Venta, 'estado'> | null | undefined): boolean {
+  return v?.estado === 'ANULADA';
+}
+
+/** Same calendar day as now, in the browser's time zone. */
+export function esDeHoy(fecha: string | null | undefined): boolean {
+  if (!fecha) return false;
+  const d = new Date(fecha);
+  const hoy = new Date();
+  return d.getFullYear() === hoy.getFullYear() && d.getMonth() === hoy.getMonth() && d.getDate() === hoy.getDate();
 }
 
 export function condicionLabel(c: string | null | undefined): string {

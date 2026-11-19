@@ -12,6 +12,7 @@ import { MaterialModule } from '../../material.module';
 import { Cliente, VentaResumen } from '../../core/models/cliente.model';
 import { ClienteService } from '../../core/services/cliente.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ROLES_ALTA_CLIENTES } from '../../core/auth/permisos';
 import { formatGs } from '../../core/format';
 import { mensajeError } from '../../core/http-error';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../core/ui/confirm-dialog.component';
@@ -42,6 +43,8 @@ export class ClientesComponent implements OnInit {
 
   /** Only Administrators can create, edit or delete (the backend enforces it too). */
   readonly isAdmin = computed(() => this.auth.user()?.rol?.nombre === 'Administrador');
+  /** Cajero registers new clients while invoicing, but does not edit or delete them. */
+  readonly puedeCrear = computed(() => ROLES_ALTA_CLIENTES.includes(this.auth.rol()));
   readonly columns = computed(() =>
     ['nombre', 'ciRuc', 'contacto', 'compras'].concat(this.isAdmin() ? ['acciones'] : [])
   );

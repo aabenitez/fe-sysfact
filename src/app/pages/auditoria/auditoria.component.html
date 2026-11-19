@@ -1,0 +1,134 @@
+<!-- Header -->
+<div class="page-head">
+  <div>
+    <h1>Auditoría</h1>
+    <p>Quién creó, editó, anuló o eliminó ventas y clientes. Los registros no se pueden modificar ni borrar.</p>
+  </div>
+  <button mat-stroked-button color="primary" (click)="buscar()" [disabled]="loading()">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+    Actualizar
+  </button>
+</div>
+
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <!-- Filters -->
+    <form class="filters" (ngSubmit)="buscar()">
+      <label class="date-field">
+        <span>Desde</span>
+        <input type="date" name="desde" [(ngModel)]="desde" (change)="buscar()" [max]="hasta" />
+      </label>
+      <label class="date-field">
+        <span>Hasta</span>
+        <input type="date" name="hasta" [(ngModel)]="hasta" (change)="buscar()" [min]="desde" />
+      </label>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-select name="entidad" [(ngModel)]="entidad" (ngModelChange)="buscar()" aria-label="Filtrar por sección">
+          <mat-option value="">Ventas y clientes</mat-option>
+          @for (e of entidades; track e.value) {
+          <mat-option [value]="e.value">{{ e.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-select name="accion" [(ngModel)]="accion" (ngModelChange)="buscar()" aria-label="Filtrar por acción">
+          <mat-option value="">Todas las acciones</mat-option>
+          @for (a of acciones; track a.value) {
+          <mat-option [value]="a.value">{{ a.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-select name="usuario" [(ngModel)]="usuarioId" (ngModelChange)="buscar()" aria-label="Filtrar por usuario">
+          <mat-option value="">Todos los usuarios</mat-option>
+          @for (u of usuarios(); track u.id) {
+          <mat-option [value]="u.id">{{ u.nombres }} {{ u.apellidos }} · {{ u.rol.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-button type="button" color="primary" (click)="limpiar()">Limpiar</button>
+    </form>
+
+    @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    @for (i of [1, 2, 3, 4]; track i) {
+    <div class="skeleton-row"></div>
+    }
+    } @else if (error()) {
+    <div class="state">
+      <i class="iconify state-icon state-icon--error" data-icon="solar:danger-triangle-line-duotone"></i>
+      <h3>{{ error() }}</h3>
+      <button mat-flat-button color="primary" (click)="buscar()">Reintentar</button>
+    </div>
+    } @else if (registros().length === 0) {
+    <div class="state">
+      <i class="iconify state-icon" data-icon="solar:shield-check-line-duotone"></i>
+      <h3>No hay registros con estos filtros</h3>
+      <p>Probá con otro rango de fechas.</p>
+    </div>
+    } @else {
+    <div class="result-info">
+      <span><strong>{{ registros().length }}</strong> registros</span>
+      @for (a of acciones; track a.value) { @if (porAccion()[a.value]) {
+      <span [class]="'chip chip--' + a.value.toLowerCase()">{{ a.label }}: {{ porAccion()[a.value] }}</span>
+      } }
+      @if (registros().length >= limite) {
+      <span class="muted">Se muestran los {{ limite }} más recientes; acotá las fechas para ver más.</span>
+      }
+    </div>
+
+    <ul class="log">
+      @for (r of registros(); track r.id) {
+      <li [class]="'entry entry--' + r.accion.toLowerCase()">
+        <button type="button" class="entry-main" (click)="toggle(r)" [attr.aria-expanded]="abiertos().has(r.id)">
+          <span class="entry-icon"><i class="iconify" [attr.data-icon]="accionIcon(r.accion)"></i></span>
+          <span class="entry-when">
+            <span>{{ r.fecha | date: 'dd/MM/yyyy' }}</span>
+            <span class="muted small">{{ r.fecha | date: 'HH:mm:ss' }}</span>
+          </span>
+          <span class="entry-who">
+            <span class="strong">{{ r.usuarioNombre }}</span>
+            <span class="muted small">{{ r.usuarioRol ?? '—' }}</span>
+          </span>
+          <span class="entry-what">
+            <span>
+              <span class="strong">{{ accionLabel(r.accion) }}</span>
+              {{ registro(r) }}
+            </span>
+            @if (r.detalle) {
+            <span class="muted small detail">{{ r.detalle }}</span>
+            }
+          </span>
+          <i class="iconify chevron" [attr.data-icon]="abiertos().has(r.id) ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'"></i>
+        </button>
+
+        @if (abiertos().has(r.id)) {
+        <div class="entry-data">
+          @if (enlace(r); as link) {
+          <a mat-stroked-button color="primary" [routerLink]="link" class="open-link">
+            <i class="iconify icon-18 m-r-6" data-icon="solar:document-text-line-duotone"></i>
+            Abrir {{ registro(r).toLowerCase() }}
+          </a>
+          }
+          <div class="data-grid">
+            <div>
+              <span class="data-label">Antes</span>
+              <pre>{{ json(r.datosAntes) }}</pre>
+            </div>
+            <div>
+              <span class="data-label">Después</span>
+              <pre>{{ json(r.datosDespues) }}</pre>
+            </div>
+          </div>
+        </div>
+        }
+      </li>
+      }
+    </ul>
+    }
+  </mat-card-content>
+</mat-card>

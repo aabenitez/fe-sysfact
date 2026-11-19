@@ -7,12 +7,17 @@ import { MaterialModule } from '../../material.module';
 import { API_URL } from '../../core/api.config';
 import { AuthService } from '../../core/auth/auth.service';
 import { formatGs } from '../../core/format';
+import { ROLES_CATALOGO } from '../../core/auth/permisos';
+
+/** Pages only the catalog roles may open (see app.routes.ts). */
+const RUTAS_CATALOGO = ['/proveedores', '/unidades-de-medida', '/parametros'];
 
 interface Venta {
   id: number;
   condicionVenta: string;
   fecha: string;
   totalFactura: number;
+  estado?: string;
   cliente?: { nombres: string; apellidos: string; ciRuc?: string } | null;
 }
 
@@ -61,18 +66,25 @@ export class InicioComponent implements OnInit {
       parametros: get<unknown>('parametros'),
       proveedores: get<unknown>('proveedores'),
     }).subscribe((r) => {
-      const ventas = r.ventas ?? [];
+      // Cancelled sales do not count.
+      const ventas = (r.ventas ?? []).filter((v) => v.estado !== 'ANULADA');
       this.loadError.set(Object.values(r).every((v) => v === null));
       this.totalVendido.set(ventas.reduce((acc, v) => acc + (v.totalFactura ?? 0), 0));
       this.ventas.set(ventas.slice(0, 5));
-      this.kpis.set([
-        { label: 'Ventas', value: r.ventas?.length ?? null, icon: 'solar:cart-large-2-line-duotone', tone: 'primary', hint: 'facturas emitidas', route: '/ventas' },
+      const kpis: Kpi[] = [
+        { label: 'Ventas', value: r.ventas ? ventas.length : null, icon: 'solar:cart-large-2-line-duotone', tone: 'primary', hint: 'facturas emitidas', route: '/ventas' },
         { label: 'Clientes', value: r.clientes?.length ?? null, icon: 'solar:users-group-rounded-line-duotone', tone: 'success', hint: 'registrados', route: '/clientes' },
         { label: 'Artículos', value: r.articulos?.length ?? null, icon: 'solar:box-line-duotone', tone: 'warning', hint: 'en catálogo', route: '/articulos' },
         { label: 'Proveedores', value: r.proveedores?.length ?? null, icon: 'solar:delivery-line-duotone', tone: 'accent', hint: 'registrados', route: '/proveedores' },
         { label: 'Unidades de medida', value: r.unidades?.length ?? null, icon: 'solar:ruler-line-duotone', tone: 'info', hint: 'configuradas', route: '/unidades-de-medida' },
         { label: 'Parámetros', value: r.parametros?.length ?? null, icon: 'solar:settings-line-duotone', tone: 'neutral', hint: 'del sistema', route: '/parametros' },
-      ]);
+      ];
+      const veCatalogo = ROLES_CATALOGO.includes(this.auth.rol());
+      this.kpis.set(
+        kpis.filter(
+          (k) => (k.value !== null || this.loadError()) && (veCatalogo || !RUTAS_CATALOGO.includes(k.route ?? ''))
+        )
+      );
       this.loading.set(false);
     });
   }

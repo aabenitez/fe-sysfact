@@ -17,6 +17,8 @@ export class AuthService {
   /** Current user (null when there is no session). */
   readonly user = this._user.asReadonly();
   readonly isLoggedIn = computed(() => this._user() !== null);
+  /** Role name of the current user ('' without a session). */
+  readonly rol = computed(() => this._user()?.rol?.nombre ?? '');
   readonly fullName = computed(() => {
     const u = this._user();
     return u ? `${u.nombres} ${u.apellidos}`.trim() : '';
