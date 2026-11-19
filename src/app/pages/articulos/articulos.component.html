@@ -114,9 +114,15 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Artículo</th>
           <td mat-cell *matCellDef="let a">
             <div class="product">
-              <span class="product-avatar">{{ a.nombre.charAt(0) }}</span>
+              <app-articulo-thumb [articulo]="a" [size]="44" (zoom)="verImagen(a)" />
               <div>
+                @if (a.nombreImagen) {
+                <button type="button" class="product-name product-name--link" (click)="verImagen(a)" title="Ver foto">
+                  {{ a.nombre }}
+                </button>
+                } @else {
                 <div class="product-name">{{ a.nombre }}</div>
+                }
                 <div class="product-desc">{{ a.descripcion || 'Sin descripción' }}</div>
               </div>
             </div>

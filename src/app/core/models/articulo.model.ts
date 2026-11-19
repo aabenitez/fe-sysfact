@@ -1,3 +1,5 @@
+import { API_URL } from '../api.config';
+
 export interface UnidadMedida {
   id: number;
   nombre: string;
@@ -42,6 +44,18 @@ export interface Articulo {
   unidadMedida: UnidadMedida;
   proveedor: Proveedor;
   nombreImagen: string | null;
+}
+
+/** Photo rules, mirrored from ArticuloImagenService (the backend checks them again). */
+export const IMAGEN_MAX_BYTES = 8 * 1024 * 1024;
+export const IMAGEN_TIPOS = ['image/jpeg', 'image/png', 'image/webp'];
+
+/**
+ * URL of the article's photo, or null. The stored file name goes in the URL, so a new photo is a
+ * new URL and the browser never shows a stale cached one.
+ */
+export function imagenArticuloUrl(a: Pick<Articulo, 'id' | 'nombreImagen'> | null | undefined): string | null {
+  return a?.nombreImagen ? `${API_URL}/articulos/${a.id}/imagen?v=${encodeURIComponent(a.nombreImagen)}` : null;
 }
 
 /** Body for POST/PUT /sysfact/articulos. */

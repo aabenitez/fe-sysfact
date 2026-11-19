@@ -1,9 +1,9 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { catchError, forkJoin, of } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { MaterialModule } from '../../material.module';
 import { API_URL } from '../../core/api.config';
 import {
@@ -11,8 +11,11 @@ import {
   ArticuloInput,
   Proveedor,
   TASAS_IVA,
+  IMAGEN_MAX_BYTES,
+  IMAGEN_TIPOS,
   TasaIva,
   UnidadMedida,
+  imagenArticuloUrl,
   ivaIncluido,
 } from '../../core/models/articulo.model';
 import { ArticuloService } from '../../core/services/articulo.service';
@@ -26,6 +29,9 @@ export interface ArticuloFormData {
   articulo?: Articulo;
 }
 
+/** Dialog result: the saved article, plus a warning if it was saved but its photo was not. */
+export type ArticuloGuardado = Articulo & { avisoImagen?: string };
+
 /** Create / edit dialog. Closes with the saved article, or undefined when cancelled. */
 @Component({
   selector: 'app-articulo-form-dialog',
@@ -34,10 +40,10 @@ export interface ArticuloFormData {
   templateUrl: './articulo-form-dialog.component.html',
   styleUrls: ['./articulo-form-dialog.component.scss'],
 })
-export class ArticuloFormDialogComponent implements OnInit {
+export class ArticuloFormDialogComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
-  private readonly dialogRef = inject(MatDialogRef<ArticuloFormDialogComponent, Articulo>);
+  private readonly dialogRef = inject(MatDialogRef<ArticuloFormDialogComponent, ArticuloGuardado>);
   private readonly articuloService = inject(ArticuloService);
   private readonly proveedorService = inject(ProveedorService);
   private readonly unidadService = inject(UnidadMedidaService);
@@ -72,6 +78,83 @@ export class ArticuloFormDialogComponent implements OnInit {
   });
 
   readonly formatGs = formatGs;
+
+  // --- Photo: chosen here, uploaded after the article is saved ------------------------------
+  /** Photo the article already has (null when it has none). */
+  readonly imagenActual = imagenArticuloUrl(this.data.articulo);
+  readonly archivo = signal<File | null>(null);
+  /** Local preview of the chosen file. */
+  readonly vistaPrevia = signal<string | null>(null);
+  /** The user asked to remove the current photo. */
+  readonly quitarActual = signal(false);
+  readonly errorImagen = signal<string | null>(null);
+  /** What the photo box shows right now. */
+  readonly imagenMostrada = computed(() => this.vistaPrevia() ?? (this.quitarActual() ? null : this.imagenActual));
+  readonly aceptaTipos = IMAGEN_TIPOS.join(',');
+
+  elegirImagen(input: HTMLInputElement): void {
+    const f = input.files?.[0];
+    input.value = '';
+    if (!f) return;
+    if (!IMAGEN_TIPOS.includes(f.type)) {
+      this.errorImagen.set('Formato no permitido. Usá JPG, PNG o WEBP.');
+      return;
+    }
+    if (f.size > IMAGEN_MAX_BYTES) {
+      this.errorImagen.set('La imagen no puede superar los 8 MB.');
+      return;
+    }
+    this.errorImagen.set(null);
+    this.liberarVistaPrevia();
+    this.archivo.set(f);
+    this.vistaPrevia.set(URL.createObjectURL(f));
+    this.quitarActual.set(false);
+  }
+
+  quitarImagen(): void {
+    this.errorImagen.set(null);
+    if (this.archivo()) {
+      this.liberarVistaPrevia();
+      this.archivo.set(null);
+      this.vistaPrevia.set(null);
+    } else {
+      this.quitarActual.set(true);
+    }
+  }
+
+  deshacerQuitar(): void {
+    this.quitarActual.set(false);
+  }
+
+  ngOnDestroy(): void {
+    this.liberarVistaPrevia();
+  }
+
+  private liberarVistaPrevia(): void {
+    const url = this.vistaPrevia();
+    if (url) URL.revokeObjectURL(url);
+  }
+
+  /** After the article is saved: upload, remove or keep its photo. */
+  private guardarImagen(a: Articulo): Observable<ArticuloGuardado> {
+    const archivo = this.archivo();
+    const req: Observable<Articulo> | null = archivo
+      ? this.articuloService.subirImagen(a.id, archivo)
+      : this.quitarActual() && this.data.articulo?.nombreImagen
+        ? this.articuloService.quitarImagen(a.id)
+        : null;
+    if (!req) return of(a);
+    return req.pipe(
+      map((conImagen) => ({ ...a, nombreImagen: conImagen.nombreImagen }) as ArticuloGuardado),
+      // The article is already saved: report the photo problem instead of failing everything.
+      catchError((e: HttpErrorResponse) =>
+        of({
+          ...a,
+          avisoImagen: `Se guardó el artículo, pero no la foto: ${mensajeError(e, 'error al subir la imagen')}`,
+        } as ArticuloGuardado)
+      )
+    );
+  }
 
   ngOnInit(): void {
     const a = this.data.articulo;
@@ -125,7 +208,7 @@ export class ArticuloFormDialogComponent implements OnInit {
       tasaIva: v.tasaIva,
       unidadMedida: { id: v.unidadMedidaId! },
       proveedor: { id: v.proveedorId! },
-      // Keep the image the article already had (images are not edited here yet).
+      // The photo has its own endpoints (the backend ignores this field).
       nombreImagen: this.data.articulo?.nombreImagen ?? null,
     };
 
@@ -134,8 +217,8 @@ export class ArticuloFormDialogComponent implements OnInit {
     const req = this.data.articulo
       ? this.articuloService.actualizar(this.data.articulo.id, body)
       : this.articuloService.crear(body);
-    req.subscribe({
-      next: (guardado) => this.dialogRef.close(guardado ?? ({} as Articulo)),
+    req.pipe(switchMap((guardado) => this.guardarImagen(guardado))).subscribe({
+      next: (guardado) => this.dialogRef.close(guardado),
       error: (e: HttpErrorResponse) => {
         this.guardando.set(false);
         this.errorGuardar.set(mensajeError(e, 'No se pudo guardar el artículo.'));

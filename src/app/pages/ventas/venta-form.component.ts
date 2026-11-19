@@ -25,6 +25,8 @@ import { ROL_ADMIN } from '../../core/auth/permisos';
 import { mensajeError } from '../../core/http-error';
 import { formatGs } from '../../core/format';
 import { ClienteFormDialogComponent, ClienteFormData } from '../clientes/cliente-form-dialog.component';
+import { ArticuloThumbComponent } from '../../core/ui/articulo-thumb.component';
+import { verImagenArticulo } from '../../core/ui/articulo-imagen-dialog.component';
 
 interface Linea {
   articulo: Articulo;
@@ -37,7 +39,7 @@ interface Linea {
 @Component({
   selector: 'app-venta-form',
   standalone: true,
-  imports: [MaterialModule, FormsModule, RouterModule, DatePipe],
+  imports: [MaterialModule, FormsModule, RouterModule, DatePipe, ArticuloThumbComponent],
   templateUrl: './venta-form.component.html',
   styleUrls: ['./venta-form.component.scss'],
 })
@@ -250,6 +252,10 @@ export class VentaFormComponent implements OnInit {
 
   quitar(i: number): void {
     this.lineas.update((ls) => ls.filter((_, j) => j !== i));
+  }
+
+  verImagen(a: Articulo): void {
+    verImagenArticulo(this.dialog, a);
   }
 
   importe(l: Linea): number {

@@ -13,14 +13,16 @@ import { AuthService } from '../../core/auth/auth.service';
 import { formatGs } from '../../core/format';
 import { mensajeError } from '../../core/http-error';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../core/ui/confirm-dialog.component';
-import { ArticuloFormData, ArticuloFormDialogComponent } from './articulo-form-dialog.component';
+import { ArticuloFormData, ArticuloFormDialogComponent, ArticuloGuardado } from './articulo-form-dialog.component';
+import { ArticuloThumbComponent } from '../../core/ui/articulo-thumb.component';
+import { verImagenArticulo } from '../../core/ui/articulo-imagen-dialog.component';
 
 type FiltroTasa = '' | '10' | '5' | '0';
 
 @Component({
   selector: 'app-articulos',
   standalone: true,
-  imports: [MaterialModule, FormsModule],
+  imports: [MaterialModule, FormsModule, ArticuloThumbComponent],
   templateUrl: './articulos.component.html',
   styleUrls: ['./articulos.component.scss'],
 })
@@ -143,6 +145,11 @@ export class ArticulosComponent implements OnInit {
     this.abrirFormulario({});
   }
 
+  /** Opens the photo large (only articles that have one). */
+  verImagen(a: Articulo): void {
+    verImagenArticulo(this.dialog, a);
+  }
+
   editar(a: Articulo): void {
     this.abrirFormulario({ articulo: a });
   }
@@ -178,9 +185,13 @@ export class ArticulosComponent implements OnInit {
     this.dialog
       .open(ArticuloFormDialogComponent, { data, width: '640px', maxWidth: '95vw', autoFocus: 'first-tabbable' })
       .afterClosed()
-      .subscribe((guardado?: Articulo) => {
+      .subscribe((guardado?: ArticuloGuardado) => {
         if (!guardado) return;
-        this.aviso(data.articulo ? 'Se guardaron los cambios.' : `Se creó "${guardado.nombre}".`);
+        if (guardado.avisoImagen) {
+          this.aviso(guardado.avisoImagen, true);
+        } else {
+          this.aviso(data.articulo ? 'Se guardaron los cambios.' : `Se creó "${guardado.nombre}".`);
+        }
         this.cargar();
       });
   }

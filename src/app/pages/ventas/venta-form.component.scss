@@ -358,3 +358,16 @@ $danger: #b42318;
     align-items: stretch;
   }
 }
+
+/* ---------------- Article photos ---------------- */
+.opt-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

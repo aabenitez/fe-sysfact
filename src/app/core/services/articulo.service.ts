@@ -24,4 +24,15 @@ export class ArticuloService {
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.url}/${id}`);
   }
+
+  /** Uploads (or replaces) the photo; the backend stores it as a medium-size JPEG. */
+  subirImagen(id: number, archivo: File): Observable<Articulo> {
+    const form = new FormData();
+    form.append('archivo', archivo);
+    return this.http.post<Articulo>(`${this.url}/${id}/imagen`, form);
+  }
+
+  quitarImagen(id: number): Observable<Articulo> {
+    return this.http.delete<Articulo>(`${this.url}/${id}/imagen`);
+  }
 }

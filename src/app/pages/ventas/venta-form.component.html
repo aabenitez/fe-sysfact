@@ -134,9 +134,14 @@
           />
           <mat-autocomplete #autoArticulo="matAutocomplete" (optionSelected)="agregarArticulo($event, buscador)">
             @for (a of articulosFiltrados(); track a.id) {
-            <mat-option [value]="a">
-              <span class="opt-main">{{ a.nombre }}</span>
-              <span class="opt-sub">{{ formatGs(a.precio) }} · {{ tasaLabel(a.tasaIva) }}</span>
+            <mat-option [value]="a" class="opt-articulo">
+              <span class="opt-row">
+                <app-articulo-thumb [articulo]="a" [size]="36" [zoomable]="false" />
+                <span>
+                  <span class="opt-main">{{ a.nombre }}</span>
+                  <span class="opt-sub">{{ formatGs(a.precio) }} · {{ tasaLabel(a.tasaIva) }}</span>
+                </span>
+              </span>
             </mat-option>
             } @empty {
             <mat-option disabled>Ningún artículo coincide.</mat-option>
@@ -166,8 +171,13 @@
               @for (l of lineas(); track l.articulo.id; let i = $index) {
               <tr>
                 <td>
-                  <div class="item-name">{{ l.articulo.nombre }}</div>
-                  <div class="muted small">IVA {{ tasaLabel(l.articulo.tasaIva) }}</div>
+                  <div class="item">
+                    <app-articulo-thumb [articulo]="l.articulo" [size]="40" (zoom)="verImagen(l.articulo)" />
+                    <div>
+                      <div class="item-name">{{ l.articulo.nombre }}</div>
+                      <div class="muted small">IVA {{ tasaLabel(l.articulo.tasaIva) }}</div>
+                    </div>
+                  </div>
                 </td>
                 <td class="qty">
                   <input

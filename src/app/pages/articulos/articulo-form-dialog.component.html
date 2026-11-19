@@ -25,6 +25,40 @@
       <textarea matInput formControlName="descripcion" rows="2"></textarea>
     </mat-form-field>
 
+    <div class="photo-field">
+      <div class="photo-box" [class.photo-box--empty]="!imagenMostrada()">
+        @if (imagenMostrada(); as src) {
+        <img [src]="src" alt="Foto del artículo" />
+        } @else {
+        <i class="iconify" data-icon="solar:gallery-wide-line-duotone"></i>
+        }
+      </div>
+      <div class="photo-actions">
+        <span class="photo-label">Foto (opcional)</span>
+        <div class="photo-buttons">
+          <input #fileInput type="file" [accept]="aceptaTipos" hidden (change)="elegirImagen(fileInput)" />
+          <button mat-stroked-button type="button" color="primary" (click)="fileInput.click()" [disabled]="guardando()">
+            <i class="iconify icon-18 m-r-6" data-icon="solar:upload-minimalistic-line-duotone"></i>
+            {{ imagenMostrada() ? 'Cambiar' : 'Subir foto' }}
+          </button>
+          @if (imagenMostrada()) {
+          <button mat-button type="button" class="danger" (click)="quitarImagen()" [disabled]="guardando()">Quitar</button>
+          } @else if (quitarActual()) {
+          <button mat-button type="button" (click)="deshacerQuitar()">Deshacer</button>
+          }
+        </div>
+        @if (errorImagen()) {
+        <span class="photo-hint photo-hint--error">{{ errorImagen() }}</span>
+        } @else if (archivo()) {
+        <span class="photo-hint">Se sube al guardar: {{ archivo()!.name }}</span>
+        } @else if (quitarActual()) {
+        <span class="photo-hint">La foto se quita al guardar.</span>
+        } @else {
+        <span class="photo-hint">JPG, PNG o WEBP, hasta 8 MB. Se guarda en tamaño mediano (máx. 1000 px).</span>
+        }
+      </div>
+    </div>
+
     <div class="frow frow--price">
       <mat-form-field appearance="outline">
         <mat-label>Precio de venta (Gs.)</mat-label>
