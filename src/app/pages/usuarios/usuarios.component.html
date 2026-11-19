@@ -1,0 +1,189 @@
+<!-- Header -->
+<div class="page-head">
+  <div>
+    <h1>Usuarios</h1>
+    <p>Personas que pueden ingresar a Sysfact y qué rol tiene cada una.</p>
+  </div>
+  <div class="head-actions">
+    <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+      Actualizar
+    </button>
+    <button mat-flat-button color="primary" (click)="nuevo()" [disabled]="loading() || !!error()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:user-plus-rounded-line-duotone"></i>
+      Nuevo usuario
+    </button>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="stats">
+  <div class="stat">
+    <span class="stat-icon"><i class="iconify" data-icon="solar:user-id-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() ? '—' : usuarios().length }}</div>
+      <div class="stat-label">Usuarios registrados</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--green"><i class="iconify" data-icon="solar:shield-user-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() ? '—' : admins() }}</div>
+      <div class="stat-label">Administradores</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--amber"><i class="iconify" data-icon="solar:letter-unread-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() ? '—' : sinCorreo() }}</div>
+      <div class="stat-label">Sin correo (no pueden ingresar)</div>
+    </div>
+  </div>
+</div>
+
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <!-- Filters -->
+    <div class="filters">
+      <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+        <i matPrefix class="iconify field-icon" data-icon="solar:magnifer-line-duotone"></i>
+        <input
+          matInput
+          placeholder="Buscar por nombre, correo o rol…"
+          [(ngModel)]="search"
+          (ngModelChange)="applyFilter()"
+          aria-label="Buscar usuarios"
+        />
+        @if (search) {
+        <button mat-icon-button matSuffix (click)="search = ''; applyFilter()" aria-label="Borrar búsqueda">
+          <mat-icon>close</mat-icon>
+        </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filtro" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="rolFiltro" (ngModelChange)="applyFilter()" aria-label="Filtrar por rol">
+          <mat-option value="">Todos los roles</mat-option>
+          @for (r of roles(); track r.id) {
+          <mat-option [value]="r.id">{{ r.nombre }} ({{ cantidadPorRol(r) }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    @for (i of [1, 2, 3, 4]; track i) {
+    <div class="skeleton-row"></div>
+    }
+    } @else if (error()) {
+    <div class="state">
+      <i class="iconify state-icon state-icon--error" data-icon="solar:danger-triangle-line-duotone"></i>
+      <h3>No se pudieron cargar los usuarios</h3>
+      <p>{{ error() }}</p>
+      <button mat-flat-button color="primary" (click)="cargar()">Reintentar</button>
+    </div>
+    } @else {
+    <div class="result-info">
+      Mostrando <strong>{{ visibles() }}</strong> de {{ usuarios().length }} usuarios
+    </div>
+
+    <div class="table-wrap">
+      <table mat-table [dataSource]="dataSource" matSort matSortActive="nombre" matSortDirection="asc" class="clientes-table">
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Usuario</th>
+          <td mat-cell *matCellDef="let u">
+            <div class="person">
+              <span class="person-avatar">{{ iniciales(u) }}</span>
+              <div class="person-text">
+                <div class="person-name">
+                  {{ u.apellidos }}, {{ u.nombres }}
+                  @if (u.esYo) {
+                  <span class="pill pill--yo">Vos</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="correo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Correo</th>
+          <td mat-cell *matCellDef="let u">
+            @if (u.correo?.trim()) {
+            <span class="contact-line">
+              <i class="iconify" data-icon="solar:letter-line-duotone"></i>
+              <span>{{ u.correo }}</span>
+            </span>
+            } @else {
+            <span class="contact-line warn-line" matTooltip="Sin correo no puede iniciar sesión. Editalo para agregarle uno.">
+              <i class="iconify" data-icon="solar:danger-triangle-line-duotone"></i>
+              <span>Sin correo</span>
+            </span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="rol">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Rol</th>
+          <td mat-cell *matCellDef="let u">
+            <span [class]="rolClase(u)">{{ u.rol?.nombre ?? '—' }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="actions-col"><span class="cdk-visually-hidden">Acciones</span></th>
+          <td mat-cell *matCellDef="let u" class="actions-col">
+            <button
+              mat-icon-button
+              (click)="editar(u)"
+              [disabled]="eliminando() === u.id"
+              matTooltip="Editar"
+              [attr.aria-label]="'Editar ' + u.nombreCompleto"
+            >
+              <i class="iconify action-icon" data-icon="solar:pen-new-square-line-duotone"></i>
+            </button>
+            <button
+              mat-icon-button
+              class="danger"
+              (click)="eliminar(u)"
+              [disabled]="eliminando() === u.id"
+              [class.soft-disabled]="!!motivoNoEliminar(u)"
+              [matTooltip]="motivoNoEliminar(u) ?? 'Eliminar'"
+              [attr.aria-label]="'Eliminar ' + u.nombreCompleto"
+            >
+              <i class="iconify action-icon" data-icon="solar:trash-bin-trash-line-duotone"></i>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-match" [attr.colspan]="columns.length">
+            Ningún usuario coincide con la búsqueda.
+            <button mat-button color="primary" (click)="limpiar()">Limpiar filtros</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [pageSizeOptions]="[10, 25, 50]"
+      [pageSize]="10"
+      showFirstLastButtons
+      aria-label="Paginación de usuarios"
+    ></mat-paginator>
+    }
+  </mat-card-content>
+</mat-card>
+
+<p class="roles-note">
+  <i class="iconify" data-icon="solar:info-circle-line-duotone"></i>
+  <span>
+    <strong>Administrador</strong>: acceso completo, incluidos usuarios y parámetros.
+    <strong>Cargador</strong>: ve ventas, clientes, artículos, proveedores y parámetros, pero no puede modificarlos.
+    Los demás roles todavía no tienen permisos asignados.
+  </span>
+</p>

@@ -1,0 +1,50 @@
+// Shares the list styles of Clientes (clientes.component.scss); only the extras live here.
+$muted: #707a82;
+
+.person-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pill {
+  &--admin {
+    color: #4f46e5;
+    background: #eef0ff;
+  }
+  &--cargador {
+    color: #0f7a46;
+    background: #e6f7ee;
+  }
+  &--yo {
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #c27803;
+    background: #fff5e0;
+  }
+}
+
+.warn-line {
+  color: #c27803;
+}
+
+// The button stays clickable (it explains why), but looks unavailable.
+.soft-disabled {
+  opacity: 0.4;
+}
+
+.roles-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 16px 4px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: $muted;
+
+  i {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    font-size: 16px;
+  }
+}

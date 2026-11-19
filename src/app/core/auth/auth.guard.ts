@@ -13,6 +13,13 @@ export const authGuard: CanActivateFn = (_route, state) => {
       });
 };
 
+/** Pages only an Administrador can use (the backend enforces it too). */
+export const adminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.user()?.rol?.nombre === 'Administrador' ? true : router.createUrlTree(['/inicio']);
+};
+
 /** Keeps a user who is already logged in from seeing the login again. */
 export const guestGuard: CanActivateFn = () => {
   const auth = inject(AuthService);

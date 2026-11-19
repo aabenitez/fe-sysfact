@@ -1,0 +1,110 @@
+<h2 mat-dialog-title class="dialog-title">
+  <span class="dialog-title-icon"><i class="iconify" [attr.data-icon]="editando ? 'solar:pen-new-square-line-duotone' : 'solar:user-plus-rounded-line-duotone'"></i></span>
+  {{ editando ? 'Editar usuario' : 'Nuevo usuario' }}
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" (ngSubmit)="guardar()" id="usuario-form" class="form" novalidate autocomplete="off">
+    <div class="frow">
+      <mat-form-field appearance="outline">
+        <mat-label>Nombres</mat-label>
+        <input matInput formControlName="nombres" maxlength="100" cdkFocusInitial autocomplete="off" />
+        @if (form.controls.nombres.invalid) {
+        <mat-error>Los nombres son obligatorios.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Apellidos</mat-label>
+        <input matInput formControlName="apellidos" maxlength="100" autocomplete="off" />
+        @if (form.controls.apellidos.invalid) {
+        <mat-error>Los apellidos son obligatorios.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="frow">
+      <mat-form-field appearance="outline">
+        <mat-label>Correo electrónico</mat-label>
+        <input matInput type="email" formControlName="correo" maxlength="100" autocomplete="off" />
+        <mat-hint>Con este correo inicia sesión.</mat-hint>
+        @if (form.controls.correo.hasError('required')) {
+        <mat-error>El correo es obligatorio.</mat-error>
+        } @else if (form.controls.correo.hasError('email')) {
+        <mat-error>El correo no tiene un formato válido.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Rol</mat-label>
+        <mat-select formControlName="rolId">
+          @for (r of data.roles; track r.id) {
+          <mat-option [value]="r.id">{{ r.nombre }}</mat-option>
+          }
+        </mat-select>
+        @if (data.esUsuarioActual) {
+        <mat-hint>No podés cambiar tu propio rol.</mat-hint>
+        }
+        @if (form.controls.rolId.invalid) {
+        <mat-error>Elegí un rol.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="frow">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ editando ? 'Contraseña nueva (opcional)' : 'Contraseña' }}</mat-label>
+        <input
+          matInput
+          [type]="verContrasena() ? 'text' : 'password'"
+          formControlName="contrasena"
+          maxlength="100"
+          autocomplete="new-password"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="verContrasena.set(!verContrasena())"
+          [attr.aria-label]="verContrasena() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+        >
+          <i class="iconify icon-20" [attr.data-icon]="verContrasena() ? 'solar:eye-closed-line-duotone' : 'solar:eye-line-duotone'"></i>
+        </button>
+        <mat-hint>{{ editando ? 'Dejala vacía para no cambiarla.' : 'Mínimo ' + minContrasena + ' caracteres.' }}</mat-hint>
+        @if (form.controls.contrasena.hasError('required')) {
+        <mat-error>La contraseña es obligatoria.</mat-error>
+        } @else if (form.controls.contrasena.hasError('minlength')) {
+        <mat-error>Tiene que tener al menos {{ minContrasena }} caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Repetir contraseña</mat-label>
+        <input
+          matInput
+          [type]="verContrasena() ? 'text' : 'password'"
+          formControlName="confirmar"
+          maxlength="100"
+          autocomplete="new-password"
+        />
+        @if (form.hasError('distintas') && form.controls.confirmar.touched) {
+        <mat-hint class="hint-error">Las contraseñas no coinciden.</mat-hint>
+        }
+      </mat-form-field>
+    </div>
+
+    @if (errorGuardar()) {
+    <div class="alert" role="alert">{{ errorGuardar() }}</div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancelar()" [disabled]="guardando()">Cancelar</button>
+  <button mat-flat-button color="primary" type="submit" form="usuario-form" [disabled]="guardando()">
+    @if (guardando()) {
+    <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+    }
+    {{ editando ? 'Guardar cambios' : 'Crear usuario' }}
+  </button>
+</mat-dialog-actions>

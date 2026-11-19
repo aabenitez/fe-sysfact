@@ -1,5 +1,6 @@
 import { BreakpointObserver, MediaMatcher } from '@angular/cdk/layout';
-import { Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewEncapsulation, computed, inject } from '@angular/core';
+import { AuthService } from '../../core/auth/auth.service';
 import { Subscription } from 'rxjs';
 import { MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
 import { NavigationEnd, Router } from '@angular/router';
@@ -40,7 +41,13 @@ const BELOWMONITOR = 'screen and (max-width: 1023px)';
 
 export class FullComponent implements OnInit {
 
-  navItems = navItems;
+  private readonly auth = inject(AuthService);
+
+  /** Menu items the logged-in user's role may see. */
+  readonly navItems = computed(() => {
+    const rol = this.auth.user()?.rol?.nombre ?? '';
+    return navItems.filter((item) => !item.roles || item.roles.includes(rol));
+  });
 
   @ViewChild('leftsidenav')
   public sidenav: MatSidenav | any;

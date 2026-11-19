@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
-import { authGuard } from './core/auth/auth.guard';
+import { adminGuard, authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -64,23 +64,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/parametros/parametros.component').then((m) => m.ParametrosComponent),
       },
-      // MatDash template demo pages (kept as a visual reference)
       {
-        path: 'dashboard',
-        loadChildren: () =>
-          import('./pages/pages.routes').then((m) => m.PagesRoutes),
-      },
-      {
-        path: 'ui-components',
-        loadChildren: () =>
-          import('./pages/ui-components/ui-components.routes').then(
-            (m) => m.UiComponentsRoutes
-          ),
-      },
-      {
-        path: 'extra',
-        loadChildren: () =>
-          import('./pages/extra/extra.routes').then((m) => m.ExtraRoutes),
+        path: 'usuarios',
+        title: 'Usuarios · Sysfact',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./pages/usuarios/usuarios.component').then((m) => m.UsuariosComponent),
       },
     ],
   },
