@@ -241,6 +241,200 @@ button:not(.danger):hover .action-icon {
   color: $muted;
 }
 
+/* ---------------- View switch ---------------- */
+.list-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+
+  .result-info {
+    margin-bottom: 0;
+  }
+}
+
+.list-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+
+  .order {
+    width: 210px;
+  }
+}
+
+.view-toggle {
+  height: 44px;
+  align-items: stretch;
+  border-radius: 10px;
+
+  ::ng-deep .mat-button-toggle-button {
+    height: 100%;
+  }
+  ::ng-deep .mat-button-toggle-label-content {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 12px;
+    line-height: 1;
+  }
+  ::ng-deep .mat-button-toggle-checked {
+    background: #eeedff;
+    .toggle-icon {
+      color: $primary;
+    }
+  }
+}
+
+.toggle-icon {
+  font-size: 20px;
+  color: $muted;
+}
+
+/* ---------------- Cards ---------------- */
+.art-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 20px;
+  margin-bottom: 8px;
+}
+
+.art-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: 14px;
+  background: #fff;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(17, 28, 45, 0.1);
+    transform: translateY(-2px);
+  }
+  &:hover .card-actions,
+  &:focus-within .card-actions {
+    opacity: 1;
+  }
+  &:hover .card-photo img {
+    transform: scale(1.04);
+  }
+}
+
+.card-media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: #fff;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.card-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+  }
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: -4px;
+  }
+}
+
+.card-letter {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 56px;
+  font-weight: 800;
+  color: $primary;
+  background: #f5f4ff;
+}
+
+// Bottom-left, so it never sits under the admin buttons (top-right) on narrow cards.
+.card-tax {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
+.card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.card-action.mat-mdc-mini-fab {
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(17, 28, 45, 0.15);
+
+  .action-icon {
+    font-size: 18px;
+  }
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px 16px;
+}
+
+.card-name {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: $ink;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.card-provider {
+  overflow: hidden;
+  font-size: 12.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: $muted;
+}
+
+.card-price {
+  margin-top: 2px;
+  font-size: 18px;
+  font-weight: 800;
+  color: $ink;
+}
+
+// Touch screens have no hover: keep the admin buttons visible.
+@media (hover: none) {
+  .card-actions {
+    opacity: 1;
+  }
+}
+
 /* ---------------- States ---------------- */
 .state {
   padding: 48px 16px;
@@ -290,5 +484,25 @@ button:not(.danger):hover .action-icon {
 @media (max-width: 575px) {
   .filters .unit {
     flex: 1 1 100%;
+  }
+  .art-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .card-body {
+    padding: 12px;
+  }
+  .card-name {
+    font-size: 13px;
+  }
+  .card-price {
+    font-size: 16px;
+  }
+  .card-action.mat-mdc-mini-fab {
+    width: 30px;
+    height: 30px;
+  }
+  .list-tools .order {
+    width: 170px;
   }
 }

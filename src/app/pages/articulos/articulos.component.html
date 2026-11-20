@@ -104,11 +104,105 @@
       }
     </div>
     } @else {
-    <div class="result-info">
-      Mostrando <strong>{{ visibles() }}</strong> de {{ articulos().length }} artículos
+    <div class="list-bar">
+      <div class="result-info">
+        Mostrando <strong>{{ visibles() }}</strong> de {{ articulos().length }} artículos
+      </div>
+      <div class="list-tools">
+        @if (vista() === 'cuadros') {
+        <mat-form-field appearance="outline" class="order" subscriptSizing="dynamic">
+          <mat-select [value]="orden()" (selectionChange)="ordenar($event.value)" aria-label="Ordenar artículos">
+            @for (o of ordenes; track o.value) {
+            <mat-option [value]="o.value">{{ o.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        }
+        <mat-button-toggle-group
+          class="view-toggle"
+          [value]="vista()"
+          (change)="cambiarVista($event.value)"
+          hideSingleSelectionIndicator
+          aria-label="Forma de ver los artículos"
+        >
+          <mat-button-toggle value="tabla" matTooltip="Ver como tabla" aria-label="Ver como tabla">
+            <i class="iconify toggle-icon" data-icon="solar:list-line-duotone"></i>
+          </mat-button-toggle>
+          <mat-button-toggle value="cuadros" matTooltip="Ver como cuadros" aria-label="Ver como cuadros">
+            <i class="iconify toggle-icon" data-icon="solar:widget-4-line-duotone"></i>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
     </div>
 
-    <div class="table-wrap">
+    @if (vista() === 'cuadros') {
+    @if (visibles() === 0) {
+    <div class="no-match">
+      Ningún artículo coincide con la búsqueda.
+      <button mat-button color="primary" (click)="limpiar()">Limpiar filtros</button>
+    </div>
+    } @else {
+    <div class="art-cards">
+      @for (a of pagina(); track a.id) {
+      <article class="art-card">
+        <div class="card-media">
+          @if (imagenUrl(a); as url) {
+          <button type="button" class="card-photo" (click)="verImagen(a)" [attr.aria-label]="'Ver foto de ' + a.nombre">
+            <img [src]="url" [alt]="a.nombre" loading="lazy" decoding="async" (error)="fotoFallo(a.id)" />
+          </button>
+          } @else {
+          <div class="card-letter" aria-hidden="true">{{ inicial(a) }}</div>
+          }
+          <span class="tax card-tax tax--{{ a.tasaIva }}">{{ tasaLabel(a.tasaIva) }}</span>
+          @if (isAdmin()) {
+          <div class="card-actions">
+            <button
+              mat-mini-fab
+              class="card-action"
+              (click)="editar(a)"
+              [disabled]="eliminando() === a.id"
+              matTooltip="Editar"
+              [attr.aria-label]="'Editar ' + a.nombre"
+            >
+              <i class="iconify action-icon" data-icon="solar:pen-new-square-line-duotone"></i>
+            </button>
+            <button
+              mat-mini-fab
+              class="card-action danger"
+              (click)="eliminar(a)"
+              [disabled]="eliminando() === a.id"
+              matTooltip="Eliminar"
+              [attr.aria-label]="'Eliminar ' + a.nombre"
+            >
+              <i class="iconify action-icon" data-icon="solar:trash-bin-trash-line-duotone"></i>
+            </button>
+          </div>
+          }
+        </div>
+        <div class="card-body">
+          @if (a.nombreImagen) {
+          <button type="button" class="card-name product-name--link" (click)="verImagen(a)" title="Ver foto">
+            {{ a.nombre }}
+          </button>
+          } @else {
+          <div class="card-name">{{ a.nombre }}</div>
+          }
+          <div class="card-meta">
+            <span class="pill">{{ a.unidadMedida.nombre }}</span>
+            <span class="card-provider" [title]="a.proveedor.nombre || ''">{{ a.proveedor.nombre || '—' }}</span>
+          </div>
+          <div class="card-price">{{ formatGs(a.precio) }}</div>
+          @if (a.tasaIva) {
+          <div class="iva-hint">IVA {{ formatGs(ivaIncluido(a.precio, a.tasaIva)) }}</div>
+          }
+        </div>
+      </article>
+      }
+    </div>
+    }
+    }
+
+    <div class="table-wrap" [hidden]="vista() === 'cuadros'">
       <table mat-table [dataSource]="dataSource" matSort matSortActive="nombre" matSortDirection="asc" class="articulos-table">
         <ng-container matColumnDef="nombre">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Artículo</th>
@@ -196,8 +290,8 @@
     </div>
 
     <mat-paginator
-      [pageSizeOptions]="[10, 25, 50]"
-      [pageSize]="10"
+      [pageSizeOptions]="[12, 24, 48]"
+      [pageSize]="12"
       showFirstLastButtons
       aria-label="Paginación de artículos"
     ></mat-paginator>
