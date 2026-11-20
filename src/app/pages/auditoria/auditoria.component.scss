@@ -184,14 +184,15 @@ $red: #b42318;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 
-  pre {
-    max-height: 320px;
+  .code {
+    max-height: 360px;
     margin: 4px 0 0;
-    padding: 12px;
+    padding: 10px 0;
     overflow: auto;
     border-radius: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 12px;
-    line-height: 1.45;
+    line-height: 1.5;
     color: #344054;
     background: #f8f9fb;
     border: 1px solid $line;
@@ -270,4 +271,142 @@ $red: #b42318;
   .data-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ---------------- Differences ---------------- */
+$mod: #b54708;
+$mod-bg: #fffaeb;
+$add: #067647;
+$add-bg: #ecfdf3;
+$del: #b42318;
+$del-bg: #fef3f2;
+
+.changes {
+  margin-bottom: 10px;
+
+  ul {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+.change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  border-left: 3px solid transparent;
+}
+.change--modificado {
+  background: $mod-bg;
+  border-left-color: $mod;
+}
+.change--agregado {
+  background: $add-bg;
+  border-left-color: $add;
+}
+.change--quitado {
+  background: $del-bg;
+  border-left-color: $del;
+}
+
+.change-type {
+  min-width: 80px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.change--modificado .change-type {
+  color: $mod;
+}
+.change--agregado .change-type {
+  color: $add;
+}
+.change--quitado .change-type {
+  color: $del;
+}
+
+.change-path {
+  font-size: 12.5px;
+  color: $ink;
+  background: none;
+}
+.change-values {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+
+  del {
+    color: $del;
+    text-decoration: line-through;
+  }
+  ins {
+    color: $add;
+    text-decoration: none;
+    font-weight: 600;
+  }
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: $muted;
+}
+.legend-item::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+.legend-item--modificado::before {
+  background: #fedf89;
+}
+.legend-item--agregado::before {
+  background: #abefc6;
+}
+.legend-item--quitado::before {
+  background: #fecdca;
+}
+
+.no-changes {
+  margin: 0 0 10px;
+}
+
+.ln {
+  padding-right: 12px;
+  margin-left: 12px;
+  white-space: pre;
+  border-left: 3px solid transparent;
+}
+.ln--modificado {
+  background: $mod-bg;
+  border-left-color: #fdb022;
+}
+.ln--agregado {
+  background: $add-bg;
+  border-left-color: #47cd89;
+}
+.ln--quitado {
+  background: $del-bg;
+  border-left-color: #f97066;
+  text-decoration: line-through;
+  text-decoration-color: rgba($del, 0.4);
+}
+.ln--vacio {
+  color: $muted;
+  font-style: italic;
 }

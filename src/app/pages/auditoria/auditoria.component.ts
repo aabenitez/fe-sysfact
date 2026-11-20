@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, Injector, OnInit, afterNextRender, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +15,7 @@ import { AuditoriaService } from '../../core/services/auditoria.service';
 import { UsuarioService } from '../../core/services/usuario.service';
 import { Usuario } from '../../core/models/usuario.model';
 import { numeroFactura } from '../../core/models/venta.model';
+import { CambioDiff, LineaDiff, ResultadoDiff, diffJson, lineasJson } from '../../core/json-diff';
 
 const LIMITE = 500;
 
@@ -29,12 +30,14 @@ const LIMITE = 500;
 export class AuditoriaComponent implements OnInit {
   private readonly service = inject(AuditoriaService);
   private readonly usuariosService = inject(UsuarioService);
+  private readonly injector = inject(Injector);
 
   readonly acciones = ACCIONES;
   readonly entidades = ENTIDADES;
   readonly accionLabel = accionLabel;
   readonly accionIcon = accionIcon;
   readonly limite = LIMITE;
+  readonly numeroFactura = numeroFactura;
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -110,6 +113,17 @@ export class AuditoriaComponent implements OnInit {
       n.has(r.id) ? n.delete(r.id) : n.add(r.id);
       return n;
     });
+    if (this.abiertos().has(r.id)) {
+      afterNextRender(() => this.irAlPrimerCambio(r.id), { injector: this.injector });
+    }
+  }
+
+  /** Scrolls each before/after pane to its first highlighted line. */
+  private irAlPrimerCambio(id: number): void {
+    document.querySelectorAll<HTMLElement>(`[data-entry="${id}"] .code`).forEach((code) => {
+      const ln = code.querySelector<HTMLElement>('.ln--modificado, .ln--agregado, .ln--quitado');
+      if (ln) code.scrollTop = Math.max(0, ln.offsetTop - code.offsetTop - 40);
+    });
   }
 
   registro(r: Auditoria): string {
@@ -123,8 +137,39 @@ export class AuditoriaComponent implements OnInit {
     return r.entidad === 'VENTA' && r.entidadId ? ['/ventas', r.entidadId] : null;
   }
 
-  json(datos: unknown): string {
-    return datos === null || datos === undefined ? '—' : JSON.stringify(datos, null, 2);
+  private readonly diffs = new Map<number, ResultadoDiff>();
+
+  /**
+   * Before/after of an entry, line by line, with what changed marked. When one side is missing
+   * (created or deleted records) there is nothing to compare: the other side is shown plain.
+   */
+  diff(r: Auditoria): ResultadoDiff {
+    let d = this.diffs.get(r.id);
+    if (!d) {
+      const hayAntes = r.datosAntes !== null && r.datosAntes !== undefined;
+      const hayDespues = r.datosDespues !== null && r.datosDespues !== undefined;
+      d =
+        hayAntes && hayDespues
+          ? diffJson(r.datosAntes, r.datosDespues)
+          : {
+              cambios: [],
+              antes: hayAntes ? lineasJson(r.datosAntes) : [],
+              despues: hayDespues ? lineasJson(r.datosDespues) : [],
+            };
+      this.diffs.set(r.id, d);
+    }
+    return d;
+  }
+
+  readonly tipoLabel: Record<CambioDiff['tipo'], string> = {
+    modificado: 'Modificado',
+    agregado: 'Agregado',
+    quitado: 'Quitado',
+  };
+
+  /** Indentation of a printed JSON line, in characters. */
+  sangria(l: LineaDiff): string {
+    return `${l.nivel * 2}ch`;
   }
 
   private isoDia(offset: number): string {

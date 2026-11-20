@@ -83,7 +83,7 @@
 
     <ul class="log">
       @for (r of registros(); track r.id) {
-      <li [class]="'entry entry--' + r.accion.toLowerCase()">
+      <li [class]="'entry entry--' + r.accion.toLowerCase()" [attr.data-entry]="r.id">
         <button type="button" class="entry-main" (click)="toggle(r)" [attr.aria-expanded]="abiertos().has(r.id)">
           <span class="entry-icon"><i class="iconify" [attr.data-icon]="accionIcon(r.accion)"></i></span>
           <span class="entry-when">
@@ -111,19 +111,56 @@
           @if (enlace(r); as link) {
           <a mat-stroked-button color="primary" [routerLink]="link" class="open-link">
             <i class="iconify icon-18 m-r-6" data-icon="solar:document-text-line-duotone"></i>
-            Abrir {{ registro(r).toLowerCase() }}
+            Abrir la factura N.º {{ numeroFactura(r.entidadId ?? 0) }}
           </a>
+          }
+          @if (diff(r); as d) {
+          @if (d.cambios.length > 0) {
+          <div class="changes">
+            <span class="data-label">Cambios ({{ d.cambios.length }})</span>
+            <ul>
+              @for (c of d.cambios; track $index) {
+              <li [class]="'change change--' + c.tipo">
+                <span class="change-type">{{ tipoLabel[c.tipo] }}</span>
+                <code class="change-path">{{ c.ruta }}</code>
+                @if (c.tipo === 'modificado') {
+                <span class="change-values"><del>{{ c.antes }}</del> → <ins>{{ c.despues }}</ins></span>
+                }
+              </li>
+              }
+            </ul>
+          </div>
+          <div class="legend" aria-hidden="true">
+            <span class="legend-item legend-item--modificado">Modificado</span>
+            <span class="legend-item legend-item--agregado">Agregado</span>
+            <span class="legend-item legend-item--quitado">Quitado</span>
+          </div>
+          } @else if (d.antes.length && d.despues.length) {
+          <p class="muted small no-changes">Los datos guardados no cambiaron.</p>
           }
           <div class="data-grid">
             <div>
               <span class="data-label">Antes</span>
-              <pre>{{ json(r.datosAntes) }}</pre>
+              <div class="code">
+                @for (l of d.antes; track $index) {
+                <div [class]="'ln ln--' + l.estado" [style.padding-left]="sangria(l)">{{ l.texto }}</div>
+                } @empty {
+                <div class="ln ln--vacio">— (no existía)</div>
+                }
+              </div>
             </div>
             <div>
               <span class="data-label">Después</span>
-              <pre>{{ json(r.datosDespues) }}</pre>
+              <div class="code">
+                @for (l of d.despues; track $index) {
+                <div [class]="'ln ln--' + l.estado" [style.padding-left]="sangria(l)">{{ l.texto }}</div>
+                } @empty {
+                <div class="ln ln--vacio">— (eliminado)</div>
+                }
+              </div>
             </div>
           </div>
+          }
         </div>
         }
       </li>
