@@ -2,6 +2,8 @@ import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
@@ -10,6 +12,10 @@ import { MaterialModule } from '../../material.module';
 import { Articulo, UnidadMedida } from '../../core/models/articulo.model';
 import { ArticuloService } from '../../core/services/articulo.service';
 import { UnidadMedidaService } from '../../core/services/unidad-medida.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { mensajeError } from '../../core/http-error';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../core/ui/confirm-dialog.component';
+import { UnidadMedidaFormData, UnidadMedidaFormDialogComponent } from './unidad-medida-form-dialog.component';
 
 type Uso = '' | 'en-uso' | 'sin-uso';
 
@@ -28,8 +34,15 @@ interface UnidadFila extends UnidadMedida {
 export class UnidadesMedidaComponent implements OnInit {
   private readonly service = inject(UnidadMedidaService);
   private readonly articuloService = inject(ArticuloService);
+  private readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snack = inject(MatSnackBar);
 
-  readonly columns = ['nombre', 'plural', 'articulos'];
+  /** Only Administrators can create, edit or delete (the backend enforces it too). */
+  readonly isAdmin = computed(() => this.auth.user()?.rol?.nombre === 'Administrador');
+  readonly columns = computed(() =>
+    ['nombre', 'plural', 'articulos'].concat(this.isAdmin() ? ['acciones'] : [])
+  );
   readonly dataSource = new MatTableDataSource<UnidadFila>([]);
 
   readonly loading = signal(true);
@@ -38,6 +51,8 @@ export class UnidadesMedidaComponent implements OnInit {
   /** False when /articulos failed: the usage column and stats are then unknown. */
   readonly usoDisponible = signal(true);
   readonly visibles = signal(0);
+  /** Id of the unit being deleted, to disable its buttons meanwhile. */
+  readonly eliminando = signal<number | null>(null);
 
   search = '';
   uso: Uso = '';
@@ -140,6 +155,65 @@ export class UnidadesMedidaComponent implements OnInit {
     this.search = '';
     this.uso = '';
     this.applyFilter();
+  }
+
+  nuevo(): void {
+    this.abrirFormulario({});
+  }
+
+  editar(u: UnidadFila): void {
+    this.abrirFormulario({ unidad: u, articulos: u.articulos });
+  }
+
+  /** "La usan N artículos" when in use: deleting is then not offered (the backend would reject it). */
+  enUsoTexto(u: UnidadFila): string | null {
+    if (!u.articulos) return null;
+    return u.articulos === 1 ? 'La usa 1 artículo' : `La usan ${u.articulos} artículos`;
+  }
+
+  eliminar(u: UnidadFila): void {
+    const data: ConfirmDialogData = {
+      titulo: 'Eliminar unidad de medida',
+      mensaje: `¿Eliminar "${u.nombre}"? Esta acción no se puede deshacer.`,
+      confirmar: 'Eliminar',
+      peligro: true,
+    };
+    this.dialog
+      .open(ConfirmDialogComponent, { data, width: '440px' })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (!ok) return;
+        this.eliminando.set(u.id);
+        this.service.eliminar(u.id).subscribe({
+          next: () => {
+            this.eliminando.set(null);
+            this.aviso(`Se eliminó "${u.nombre}".`);
+            this.cargar();
+          },
+          error: (e: HttpErrorResponse) => {
+            this.eliminando.set(null);
+            this.aviso(mensajeError(e, 'No se pudo eliminar la unidad de medida.'), true);
+          },
+        });
+      });
+  }
+
+  private abrirFormulario(data: UnidadMedidaFormData): void {
+    this.dialog
+      .open(UnidadMedidaFormDialogComponent, { data, width: '560px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((guardada?: UnidadMedida) => {
+        if (!guardada) return;
+        this.aviso(data.unidad ? 'Se guardaron los cambios.' : `Se creó "${guardada.nombre}".`);
+        this.cargar();
+      });
+  }
+
+  private aviso(texto: string, error = false): void {
+    this.snack.open(texto, 'Cerrar', {
+      duration: error ? 7000 : 3500,
+      panelClass: error ? 'snack-error' : 'snack-ok',
+    });
   }
 
   barra(u: UnidadFila): number {

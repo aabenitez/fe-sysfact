@@ -4,10 +4,18 @@
     <h1>Unidades de medida</h1>
     <p>Cómo se venden los artículos: por maceta, bolsa, unidad…</p>
   </div>
-  <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
-    <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
-    Actualizar
-  </button>
+  <div class="head-actions">
+    <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+      Actualizar
+    </button>
+    @if (isAdmin()) {
+    <button mat-flat-button color="primary" (click)="nuevo()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:add-circle-line-duotone"></i>
+      Nueva unidad
+    </button>
+    }
+  </div>
 </div>
 
 <!-- Summary -->
@@ -92,6 +100,9 @@
       <i class="iconify state-icon" data-icon="solar:ruler-line-duotone"></i>
       <h3>Todavía no hay unidades de medida</h3>
       <p>Cuando se carguen unidades en el sistema, van a aparecer acá.</p>
+      @if (isAdmin()) {
+      <button mat-flat-button color="primary" (click)="nuevo()">Crear la primera unidad</button>
+      }
     </div>
     } @else {
     <div class="result-info">
@@ -134,11 +145,38 @@
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="actions-col"><span class="cdk-visually-hidden">Acciones</span></th>
+          <td mat-cell *matCellDef="let u" class="actions-col">
+            <button
+              mat-icon-button
+              (click)="editar(u)"
+              [disabled]="eliminando() === u.id"
+              matTooltip="Editar"
+              [attr.aria-label]="'Editar ' + u.nombre"
+            >
+              <i class="iconify action-icon" data-icon="solar:pen-new-square-line-duotone"></i>
+            </button>
+            <!-- A disabled button gets no tooltip events, so the tooltip lives on a wrapper. -->
+            <span class="tip-wrap" [matTooltip]="enUsoTexto(u) ? enUsoTexto(u) + ': no se puede eliminar' : 'Eliminar'">
+              <button
+                mat-icon-button
+                class="danger"
+                (click)="eliminar(u)"
+                [disabled]="eliminando() === u.id || !!enUsoTexto(u)"
+                [attr.aria-label]="enUsoTexto(u) ? 'No se puede eliminar ' + u.nombre + ': ' + enUsoTexto(u) : 'Eliminar ' + u.nombre"
+              >
+                <i class="iconify action-icon" data-icon="solar:trash-bin-trash-line-duotone"></i>
+              </button>
+            </span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns()"></tr>
 
         <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell no-match" [attr.colspan]="columns.length">
+          <td class="mat-cell no-match" [attr.colspan]="columns().length">
             Ninguna unidad coincide con la búsqueda.
             <button mat-button color="primary" (click)="limpiar()">Limpiar filtros</button>
           </td>

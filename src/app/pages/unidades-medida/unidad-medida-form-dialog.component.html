@@ -1,0 +1,56 @@
+<h2 mat-dialog-title class="dialog-title">
+  <span class="dialog-title-icon"><i class="iconify" [attr.data-icon]="editando ? 'solar:pen-new-square-line-duotone' : 'solar:ruler-line-duotone'"></i></span>
+  {{ editando ? 'Editar unidad de medida' : 'Nueva unidad de medida' }}
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" (ngSubmit)="guardar()" id="unidad-form" class="form" novalidate>
+    <div class="frow">
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre (singular)</mat-label>
+        <input matInput formControlName="nombre" maxlength="100" cdkFocusInitial autocomplete="off" placeholder="Ej.: Maceta" />
+        @if (form.controls.nombre.hasError('required') || form.controls.nombre.hasError('pattern')) {
+        <mat-error>El nombre es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Plural</mat-label>
+        <input
+          matInput
+          formControlName="plural"
+          maxlength="100"
+          autocomplete="off"
+          placeholder="Ej.: Macetas"
+          (input)="pluralEditado(form.controls.plural.value)"
+        />
+        @if (!editando) {
+        <mat-hint>Se completa solo; podés corregirlo.</mat-hint>
+        }
+        @if (form.controls.plural.hasError('required') || form.controls.plural.hasError('pattern')) {
+        <mat-error>El plural es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    @if (editando && (data.articulos ?? 0) > 0) {
+    <div class="note" role="note">
+      La usan {{ data.articulos }} {{ data.articulos === 1 ? 'artículo' : 'artículos' }}: el cambio se va a ver en todos.
+    </div>
+    }
+
+    @if (errorGuardar()) {
+    <div class="alert" role="alert">{{ errorGuardar() }}</div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancelar()" [disabled]="guardando()">Cancelar</button>
+  <button mat-flat-button color="primary" type="submit" form="unidad-form" [disabled]="guardando()">
+    @if (guardando()) {
+    <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+    }
+    {{ editando ? 'Guardar cambios' : 'Crear unidad' }}
+  </button>
+</mat-dialog-actions>

@@ -268,3 +268,35 @@ $muted: #707a82;
     flex: 1 1 100%;
   }
 }
+
+/* ---------------- Admin actions ---------------- */
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.actions-col {
+  width: 96px;
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.tip-wrap {
+  display: inline-block;
+}
+
+.action-icon {
+  font-size: 20px;
+  color: $muted;
+}
+
+button.danger:not(:disabled):hover .action-icon {
+  color: #d92d20;
+}
+button:not(.danger):hover .action-icon {
+  color: $primary;
+}
+button:disabled .action-icon {
+  opacity: 0.4;
+}

@@ -129,6 +129,7 @@ export class AuditoriaComponent implements OnInit {
   registro(r: Auditoria): string {
     if (r.entidad === 'VENTA') return `Factura N.º ${numeroFactura(r.entidadId ?? 0)}`;
     if (r.entidad === 'CLIENTE') return `Cliente #${r.entidadId}`;
+    if (r.entidad === 'UNIDAD_MEDIDA') return `Unidad de medida #${r.entidadId}`;
     return `${r.entidad} #${r.entidadId}`;
   }
 
