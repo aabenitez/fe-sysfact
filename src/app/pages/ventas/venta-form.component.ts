@@ -116,6 +116,33 @@ export class VentaFormComponent implements OnInit {
   });
 
   readonly editando = computed(() => this.original() !== null);
+
+  /** Units of each article already in the sale being edited (they are out of stock already). */
+  private readonly enVentaOriginal = computed(() => {
+    const m = new Map<number, number>();
+    for (const d of this.original()?.detallesVenta ?? []) {
+      m.set(d.articulo.id, (m.get(d.articulo.id) ?? 0) + (d.cantidad ?? 0));
+    }
+    return m;
+  });
+
+  /**
+   * Units of the article that can go in this sale: its stock plus, when editing, what this sale
+   * already took. Null when unknown (an article no longer in the catalog).
+   */
+  disponible(articuloId: number): number | null {
+    const a = this.articulos().find((x) => x.id === articuloId);
+    if (!a || a.existencia === undefined || a.existencia === null) return null;
+    return a.existencia + (this.enVentaOriginal().get(articuloId) ?? 0);
+  }
+
+  /** Lines asking for more than there is. Only a warning: goods may arrive before they are loaded. */
+  readonly faltantes = computed(() =>
+    this.lineas()
+      .map((l) => ({ l, d: this.disponible(l.articulo.id) }))
+      .filter((x) => x.d !== null && x.l.cantidad > x.d)
+      .map((x) => `${x.l.articulo.nombre.trim()} (hay ${x.d})`)
+  );
   readonly formatGs = formatGs;
   readonly tasaLabel = tasaLabel;
   readonly numeroFactura = numeroFactura;

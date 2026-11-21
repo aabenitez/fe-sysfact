@@ -44,7 +44,53 @@ export interface Articulo {
   unidadMedida: UnidadMedida;
   proveedor: Proveedor;
   nombreImagen: string | null;
+  /** Units in stock now (changes through goods received, adjustments and sales). */
+  existencia: number;
+  /** At or below this the article is low on stock; 0 = only when it runs out. */
+  stockMinimo: number;
 }
+
+/** sin: nothing left (or negative); poco: at or below the minimum; ok: enough. */
+export type EstadoStock = 'sin' | 'poco' | 'ok';
+
+export function estadoStock(a: Pick<Articulo, 'existencia' | 'stockMinimo'>): EstadoStock {
+  const e = a.existencia ?? 0;
+  if (e <= 0) return 'sin';
+  if (e <= (a.stockMinimo ?? 0)) return 'poco';
+  return 'ok';
+}
+
+/** "3 macetas", "1 maceta", "-2 macetas", in the article's unit. */
+export function cantidadConUnidad(n: number, um: UnidadMedida | null | undefined): string {
+  const unidad = um ? (Math.abs(n) === 1 ? um.nombre : um.plural || um.nombre) : '';
+  return `${n.toLocaleString('es-PY')} ${unidad.toLocaleLowerCase('es')}`.trim();
+}
+
+export type TipoMovimiento = 'INICIAL' | 'INGRESO' | 'AJUSTE' | 'VENTA' | 'DEVOLUCION';
+
+/** One change to an article's stock (GET /articulos/{id}/stock). */
+export interface MovimientoStock {
+  id: number;
+  fecha: string;
+  articuloId: number;
+  tipo: TipoMovimiento;
+  /** + in, - out. */
+  cantidad: number;
+  /** Stock right after this movement. */
+  existencia: number;
+  usuarioNombre: string;
+  ventaId: number | null;
+  proveedor: { id: number; nombre: string } | null;
+  motivo: string | null;
+}
+
+export const TIPOS_MOVIMIENTO: Record<TipoMovimiento, { label: string; icon: string }> = {
+  INICIAL: { label: 'Saldo inicial', icon: 'solar:flag-line-duotone' },
+  INGRESO: { label: 'Ingreso', icon: 'solar:box-minimalistic-line-duotone' },
+  AJUSTE: { label: 'Ajuste', icon: 'solar:tuning-2-line-duotone' },
+  VENTA: { label: 'Venta', icon: 'solar:cart-large-minimalistic-line-duotone' },
+  DEVOLUCION: { label: 'Devolución', icon: 'solar:undo-left-round-line-duotone' },
+};
 
 /** Photo rules, mirrored from ArticuloImagenService (the backend checks them again). */
 export const IMAGEN_MAX_BYTES = 8 * 1024 * 1024;
@@ -67,4 +113,5 @@ export interface ArticuloInput {
   unidadMedida: { id: number };
   proveedor: { id: number };
   nombreImagen?: string | null;
+  stockMinimo?: number;
 }

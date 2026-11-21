@@ -1,0 +1,289 @@
+$primary: #635bff;
+$ink: #111c2d;
+$muted: #707a82;
+$border: #e0e6eb;
+$green: #067647;
+$red: #b42318;
+$amber: #b54708;
+
+.muted {
+  color: $muted;
+}
+.small {
+  font-size: 13px;
+}
+.full {
+  width: 100%;
+}
+
+/* ---------------- Summary ---------------- */
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid $border;
+}
+
+.summary-name {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 2px;
+
+  strong {
+    font-size: 15px;
+    color: $ink;
+    overflow-wrap: anywhere;
+  }
+  span {
+    font-size: 13px;
+  }
+}
+
+.summary-stock {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 6px;
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 12px;
+  text-align: right;
+  background: #ecfdf3;
+  color: $green;
+}
+.summary-number {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.summary-unit {
+  font-size: 13px;
+  font-weight: 600;
+}
+.summary-min {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+.estado--poco {
+  background: #fffaeb;
+  color: $amber;
+}
+.estado--sin {
+  background: #fef3f2;
+  color: $red;
+}
+
+/* ---------------- Actions and forms ---------------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 0 4px;
+
+  button {
+    border-radius: 10px !important;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid $border;
+  border-radius: 12px;
+  background: #fafbfc;
+
+  h3 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 700;
+    color: $ink;
+  }
+  p {
+    margin: -4px 0 4px;
+  }
+}
+
+// Not ".row": MatDash defines a global .row with negative margins.
+.frow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 8px 12px;
+
+  mat-form-field {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hint-warn {
+  color: $amber;
+  font-weight: 600;
+}
+
+.alert {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: $red;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+}
+
+.btn-spinner {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ---------------- History ---------------- */
+.history-title {
+  margin: 20px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: $muted;
+}
+
+.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mov {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f2f5;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.mov-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 17px;
+  color: $primary;
+  background: rgba($primary, 0.1);
+
+  &--ingreso,
+  &--devolucion {
+    color: $green;
+    background: #ecfdf3;
+  }
+  &--venta {
+    color: #0b7ab8;
+    background: #e5f4fc;
+  }
+  &--ajuste {
+    color: $amber;
+    background: #fffaeb;
+  }
+  &--inicial {
+    color: $muted;
+    background: #eef1f5;
+  }
+}
+
+.mov-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mov-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  font-size: 14px;
+  color: $ink;
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: $primary;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.mov-reason {
+  margin-top: 2px;
+  font-size: 13px;
+  color: #344054;
+  overflow-wrap: anywhere;
+}
+
+.mov-meta {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.mov-nums {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.mov-qty {
+  font-size: 15px;
+  font-weight: 800;
+  color: $ink;
+
+  &--in {
+    color: $green;
+  }
+  &--out {
+    color: $red;
+  }
+}
+
+.mov-after {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 559px) {
+  .summary {
+    flex-wrap: wrap;
+  }
+  .summary-stock {
+    width: 100%;
+    text-align: left;
+    justify-content: start;
+  }
+  .frow {
+    grid-template-columns: 1fr;
+  }
+}

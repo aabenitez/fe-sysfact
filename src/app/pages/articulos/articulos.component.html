@@ -27,13 +27,20 @@
       <div class="stat-label">Artículos en catálogo</div>
     </div>
   </div>
-  <div class="stat">
-    <span class="stat-icon stat-icon--green"><i class="iconify" data-icon="solar:ruler-line-duotone"></i></span>
+  <button
+    type="button"
+    class="stat stat--button"
+    [class.stat--alert]="!loading() && pocoStock() > 0"
+    (click)="verPocoStock()"
+    [disabled]="loading() || pocoStock() === 0"
+    [attr.aria-label]="'Ver los ' + pocoStock() + ' artículos con poco stock'"
+  >
+    <span class="stat-icon stat-icon--red"><i class="iconify" data-icon="solar:box-minimalistic-line-duotone"></i></span>
     <div>
-      <div class="stat-value">{{ loading() ? '—' : unidades().length }}</div>
-      <div class="stat-label">Unidades de medida en uso</div>
+      <div class="stat-value">{{ loading() ? '—' : pocoStock() }}</div>
+      <div class="stat-label">Con poco o sin stock</div>
     </div>
-  </div>
+  </button>
   <div class="stat">
     <span class="stat-icon stat-icon--amber"><i class="iconify" data-icon="solar:tag-price-line-duotone"></i></span>
     <div>
@@ -69,6 +76,14 @@
           @for (u of unidades(); track u) {
           <mat-option [value]="u">{{ u }}</mat-option>
           }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="unit" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="stock" (ngModelChange)="applyFilter()" aria-label="Filtrar por stock">
+          <mat-option value="">Todo el stock</mat-option>
+          <mat-option value="poco">Poco o sin stock</mat-option>
+          <mat-option value="sin">Sin stock</mat-option>
         </mat-select>
       </mat-form-field>
 
@@ -191,6 +206,16 @@
             <span class="pill">{{ a.unidadMedida.nombre }}</span>
             <span class="card-provider" [title]="a.proveedor.nombre || ''">{{ a.proveedor.nombre || '—' }}</span>
           </div>
+          <button
+            type="button"
+            [class]="'stock-pill estado--' + estadoStock(a)"
+            (click)="verStock(a)"
+            [attr.aria-label]="'Stock de ' + a.nombre + ': ' + a.existencia"
+          >
+            <i class="iconify" data-icon="solar:box-line-duotone"></i>
+            {{ estadoStock(a) === 'sin' ? 'Sin stock' : cantidadConUnidad(a.existencia, a.unidadMedida) }}
+            @if (estadoStock(a) === 'sin' && a.existencia < 0) { ({{ a.existencia }}) }
+          </button>
           <div class="card-price">{{ formatGs(a.precio) }}</div>
           @if (a.tasaIva) {
           <div class="iva-hint">IVA {{ formatGs(ivaIncluido(a.precio, a.tasaIva)) }}</div>
@@ -233,6 +258,23 @@
         <ng-container matColumnDef="proveedor">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Proveedor</th>
           <td mat-cell *matCellDef="let a">{{ a.proveedor?.nombre || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="stock">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Stock</th>
+          <td mat-cell *matCellDef="let a">
+            <button
+              type="button"
+              [class]="'stock-pill estado--' + estadoStock(a)"
+              (click)="verStock(a)"
+              matTooltip="Ver movimientos de stock"
+              [attr.aria-label]="'Stock de ' + a.nombre + ': ' + a.existencia"
+            >
+              {{ a.existencia.toLocaleString('es-PY') }}
+              @if (estadoStock(a) === 'sin') { <span class="stock-tag">sin stock</span> }
+              @else if (estadoStock(a) === 'poco') { <span class="stock-tag">poco</span> }
+            </button>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="precio">

@@ -435,6 +435,75 @@ button:not(.danger):hover .action-icon {
   }
 }
 
+/* ---------------- Stock ---------------- */
+.stat--button {
+  width: 100%;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 14px rgba(17, 28, 45, 0.12);
+  }
+  &:disabled {
+    cursor: default;
+  }
+}
+.stat--alert .stat-value {
+  color: #b42318;
+}
+.stat-icon--red {
+  color: #b42318;
+  background: #fef3f2;
+}
+
+.stock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  color: #067647;
+  background: #ecfdf3;
+
+  &:hover {
+    filter: brightness(0.96);
+    text-decoration: underline;
+  }
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+  &.estado--poco {
+    color: #b54708;
+    background: #fffaeb;
+  }
+  &.estado--sin {
+    color: #b42318;
+    background: #fef3f2;
+  }
+  .iconify {
+    font-size: 15px;
+  }
+}
+.stock-tag {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.art-card .stock-pill {
+  align-self: flex-start;
+}
+
 /* ---------------- States ---------------- */
 .state {
   padding: 48px 16px;

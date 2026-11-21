@@ -12,6 +12,8 @@ export const ROLES_VENTAS = [ROL_ADMIN, ROL_CAJERO];
 export const ROLES_ALTA_CLIENTES = [ROL_ADMIN, ROL_CAJERO];
 /** Pages with catalog data a cashier does not need (suppliers, units, parameters). */
 export const ROLES_CATALOGO = [ROL_ADMIN, ROL_CARGADOR];
+/** Register goods received. Correcting the count (adjustments) is only for the Administrador. */
+export const ROLES_INGRESO_STOCK = [ROL_ADMIN, ROL_CARGADOR];
 
 export function puedeVender(rol: string): boolean {
   return ROLES_VENTAS.includes(rol);

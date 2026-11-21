@@ -115,6 +115,25 @@
       </mat-form-field>
     </div>
 
+    <div class="frow frow--half">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Stock mínimo</mat-label>
+        <input matInput type="number" formControlName="stockMinimo" min="0" step="1" inputmode="numeric" />
+        <mat-hint>Con esto o menos, avisa "poco stock".</mat-hint>
+        @if (form.controls.stockMinimo.invalid) {
+        <mat-error>Tiene que ser 0 o más.</mat-error>
+        }
+      </mat-form-field>
+      @if (editando) {
+      <p class="stock-note">
+        Existencia actual: <strong>{{ data.articulo!.existencia }}</strong>. Se cambia desde la columna Stock
+        (ingresos y ajustes), no desde acá.
+      </p>
+      } @else {
+      <p class="stock-note">El artículo empieza con stock 0; después registrá el ingreso de mercadería.</p>
+      }
+    </div>
+
     @if (errorGuardar()) {
     <div class="alert alert--error" role="alert">{{ errorGuardar() }}</div>
     }

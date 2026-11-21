@@ -8,7 +8,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { MaterialModule } from '../../material.module';
-import { Articulo, TASAS_IVA, imagenArticuloUrl, ivaIncluido, tasaLabel } from '../../core/models/articulo.model';
+import { Articulo, TASAS_IVA, cantidadConUnidad, estadoStock, imagenArticuloUrl, ivaIncluido, tasaLabel } from '../../core/models/articulo.model';
 import { ArticuloService } from '../../core/services/articulo.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { formatGs } from '../../core/format';
@@ -17,8 +17,11 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../core/ui/confirm
 import { ArticuloFormData, ArticuloFormDialogComponent, ArticuloGuardado } from './articulo-form-dialog.component';
 import { ArticuloThumbComponent } from '../../core/ui/articulo-thumb.component';
 import { verImagenArticulo } from '../../core/ui/articulo-imagen-dialog.component';
+import { StockDialogComponent, StockDialogData } from './stock-dialog.component';
 
 type FiltroTasa = '' | '10' | '5' | '0';
+/** poco includes the ones with no stock at all. */
+type FiltroStock = '' | 'poco' | 'sin';
 export type VistaArticulos = 'tabla' | 'cuadros';
 
 /** Where each browser remembers the chosen view (a convenience: if storage fails, the table is used). */
@@ -31,6 +34,8 @@ const ORDENES = [
   { value: 'precio:asc', label: 'Precio: menor a mayor' },
   { value: 'precio:desc', label: 'Precio: mayor a menor' },
   { value: 'proveedor:asc', label: 'Proveedor' },
+  { value: 'stock:asc', label: 'Stock: menor a mayor' },
+  { value: 'stock:desc', label: 'Stock: mayor a menor' },
 ] as const;
 
 function vistaGuardada(): VistaArticulos {
@@ -57,7 +62,7 @@ export class ArticulosComponent implements OnInit {
   /** Only Administrators can create, edit or delete (the backend enforces it too). */
   readonly isAdmin = computed(() => this.auth.user()?.rol?.nombre === 'Administrador');
   readonly columns = computed(() =>
-    ['nombre', 'unidad', 'proveedor', 'iva', 'precio'].concat(this.isAdmin() ? ['acciones'] : [])
+    ['nombre', 'unidad', 'proveedor', 'stock', 'iva', 'precio'].concat(this.isAdmin() ? ['acciones'] : [])
   );
   readonly dataSource = new MatTableDataSource<Articulo>([]);
 
@@ -71,7 +76,12 @@ export class ArticulosComponent implements OnInit {
   search = '';
   unidad = '';
   tasa: FiltroTasa = '';
+  stock: FiltroStock = '';
   readonly tasas = TASAS_IVA;
+
+  /** Articles with low or no stock (to restock). */
+  readonly pocoStock = computed(() => this.articulos().filter((a) => estadoStock(a) !== 'ok').length);
+  readonly estadoStock = estadoStock;
 
   readonly unidades = computed(() =>
     [...new Set(this.articulos().map((a) => a.unidadMedida?.nombre).filter(Boolean))].sort()
@@ -122,15 +132,24 @@ export class ArticulosComponent implements OnInit {
           return a.tasaIva ?? 0;
         case 'precio':
           return a.precio ?? 0;
+        case 'stock':
+          return a.existencia ?? 0;
         default:
           return (a.nombre ?? '').toLocaleLowerCase('es');
       }
     };
 
     this.dataSource.filterPredicate = (a, raw) => {
-      const { text, unidad, tasa } = JSON.parse(raw) as { text: string; unidad: string; tasa: FiltroTasa };
+      const { text, unidad, tasa, stock } = JSON.parse(raw) as {
+        text: string;
+        unidad: string;
+        tasa: FiltroTasa;
+        stock: FiltroStock;
+      };
       if (unidad && a.unidadMedida?.nombre !== unidad) return false;
       if (tasa !== '' && String(a.tasaIva) !== tasa) return false;
+      if (stock === 'poco' && estadoStock(a) === 'ok') return false;
+      if (stock === 'sin' && estadoStock(a) !== 'sin') return false;
       if (!text) return true;
       const haystack = this.normalize(
         [a.nombre, a.descripcion, a.proveedor?.nombre, a.unidadMedida?.nombre].join(' ')
@@ -165,6 +184,7 @@ export class ArticulosComponent implements OnInit {
       text: this.normalize(this.search.trim()),
       unidad: this.unidad,
       tasa: this.tasa,
+      stock: this.stock,
     });
     this.dataSource.filter = filter;
     this.dataSource.paginator?.firstPage();
@@ -178,6 +198,7 @@ export class ArticulosComponent implements OnInit {
     this.search = '';
     this.unidad = '';
     this.tasa = '';
+    this.stock = '';
     this.applyFilter();
   }
 
@@ -199,6 +220,20 @@ export class ArticulosComponent implements OnInit {
     sort.direction = direction;
     sort.sortChange.emit({ active, direction });
   }
+
+  /** Shows only what needs restocking (from the summary card). */
+  verPocoStock(): void {
+    this.stock = 'poco';
+    this.applyFilter();
+  }
+
+  /** Stock, its history and (by role) goods received or adjustments. */
+  verStock(a: Articulo): void {
+    const data: StockDialogData = { articulo: a, alCambiar: () => this.cargar() };
+    this.dialog.open(StockDialogComponent, { data, width: '640px', maxWidth: '95vw', autoFocus: false });
+  }
+
+  cantidadConUnidad = cantidadConUnidad;
 
   fotoFallo(id: number): void {
     this.fotosFallidas.update((s) => new Set(s).add(id));

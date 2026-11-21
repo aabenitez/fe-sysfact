@@ -139,7 +139,10 @@
                 <app-articulo-thumb [articulo]="a" [size]="36" [zoomable]="false" />
                 <span>
                   <span class="opt-main">{{ a.nombre }}</span>
-                  <span class="opt-sub">{{ formatGs(a.precio) }} · {{ tasaLabel(a.tasaIva) }}</span>
+                  <span class="opt-sub">
+                    {{ formatGs(a.precio) }} · {{ tasaLabel(a.tasaIva) }} ·
+                    <span [class.stock-low]="(disponible(a.id) ?? 0) <= 0">Stock: {{ disponible(a.id) ?? '—' }}</span>
+                  </span>
                 </span>
               </span>
             </mat-option>
@@ -175,7 +178,16 @@
                     <app-articulo-thumb [articulo]="l.articulo" [size]="40" (zoom)="verImagen(l.articulo)" />
                     <div>
                       <div class="item-name">{{ l.articulo.nombre }}</div>
-                      <div class="muted small">IVA {{ tasaLabel(l.articulo.tasaIva) }}</div>
+                      <div class="muted small">
+                        IVA {{ tasaLabel(l.articulo.tasaIva) }}
+                        @if (disponible(l.articulo.id) !== null) {
+                        @if (l.cantidad > disponible(l.articulo.id)!) {
+                        · <span class="stock-low">solo hay {{ disponible(l.articulo.id) }}</span>
+                        } @else {
+                        · stock {{ disponible(l.articulo.id) }}
+                        }
+                        }
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -255,6 +267,12 @@
         <div class="alert" role="alert">{{ errorGuardar() }}</div>
         } @else if (problema() && lineas().length > 0) {
         <div class="note">{{ problema() }}</div>
+        }
+        @if (!problema() && faltantes().length > 0) {
+        <div class="note note--stock" role="status">
+          No alcanza el stock de: {{ faltantes().join(', ') }}. Se puede guardar igual; el stock quedará en negativo
+          hasta que se registre el ingreso.
+        </div>
         }
 
         <button

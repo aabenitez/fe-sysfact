@@ -1,0 +1,179 @@
+<h2 mat-dialog-title class="dialog-title">
+  <span class="dialog-title-icon"><i class="iconify" data-icon="solar:box-line-duotone"></i></span>
+  Stock
+</h2>
+
+<mat-dialog-content>
+  <!-- Summary -->
+  <div class="summary">
+    <app-articulo-thumb [articulo]="articulo" [size]="56" [zoomable]="false" />
+    <div class="summary-name">
+      <strong>{{ articulo.nombre }}</strong>
+      <span class="muted">{{ articulo.proveedor.nombre || '' }}</span>
+    </div>
+    <div class="summary-stock" [class]="'summary-stock estado--' + estado()">
+      <span class="summary-number">{{ existencia().toLocaleString('es-PY') }}</span>
+      <span class="summary-unit">{{ unidad(existencia()) }}</span>
+      <span class="summary-min">
+        @switch (estado()) {
+          @case ('sin') { Sin stock }
+          @case ('poco') { Poco stock · mínimo {{ articulo.stockMinimo }} }
+          @default { Mínimo {{ articulo.stockMinimo }} }
+        }
+      </span>
+    </div>
+  </div>
+
+  @if (modo() === 'ver' && (puedeIngresar() || puedeAjustar())) {
+  <div class="actions">
+    @if (puedeIngresar()) {
+    <button mat-flat-button color="primary" type="button" (click)="abrir('ingreso')">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:box-minimalistic-line-duotone"></i>
+      Registrar ingreso
+    </button>
+    }
+    @if (puedeAjustar()) {
+    <button mat-stroked-button color="primary" type="button" (click)="abrir('ajuste')">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:tuning-2-line-duotone"></i>
+      Ajustar por conteo
+    </button>
+    }
+  </div>
+  }
+
+  <!-- Goods received -->
+  @if (modo() === 'ingreso') {
+  <form class="panel" [formGroup]="ingreso" (ngSubmit)="guardarIngreso()" novalidate>
+    <h3>Ingreso de mercadería</h3>
+    <div class="frow">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Cantidad que entra</mat-label>
+        <input matInput type="number" formControlName="cantidad" min="1" step="1" inputmode="numeric" />
+        @if (despuesDeIngreso() !== null) {
+        <mat-hint>Queda en {{ cantidad(despuesDeIngreso()!) }}</mat-hint>
+        }
+        @if (ingreso.controls.cantidad.invalid) {
+        <mat-error>Ingresá una cantidad mayor que cero.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Proveedor (opcional)</mat-label>
+        <mat-select formControlName="proveedorId">
+          <mat-option [value]="null">Sin indicar</mat-option>
+          @for (p of proveedores(); track p.id) {
+          <mat-option [value]="p.id">{{ p.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
+      <mat-label>Nota (opcional)</mat-label>
+      <input matInput formControlName="motivo" maxlength="250" placeholder="Ej.: remito N.º 455" autocomplete="off" />
+    </mat-form-field>
+    @if (errorGuardar()) {
+    <div class="alert" role="alert">{{ errorGuardar() }}</div>
+    }
+    <div class="panel-actions">
+      <button mat-button type="button" (click)="modo.set('ver')" [disabled]="guardando()">Cancelar</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="guardando()">
+        @if (guardando()) {
+        <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+        }
+        Guardar ingreso
+      </button>
+    </div>
+  </form>
+  }
+
+  <!-- Adjustment -->
+  @if (modo() === 'ajuste') {
+  <form class="panel" [formGroup]="ajuste" (ngSubmit)="guardarAjuste()" novalidate>
+    <h3>Ajuste por conteo</h3>
+    <p class="muted small">Escribí cuántas hay realmente; el sistema registra la diferencia.</p>
+    <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
+      <mat-label>Existencia contada</mat-label>
+      <input matInput type="number" formControlName="existencia" min="0" step="1" inputmode="numeric" />
+      @if (diferenciaAjuste() !== null) {
+      <mat-hint [class.hint-warn]="diferenciaAjuste() !== 0">
+        @if (diferenciaAjuste() === 0) { Igual a la actual } @else {
+        Diferencia: {{ conSigno(diferenciaAjuste()!) }} ({{ existencia() }} → {{ ajuste.controls.existencia.value }})
+        }
+      </mat-hint>
+      }
+      @if (ajuste.controls.existencia.invalid) {
+      <mat-error>Ingresá la cantidad contada (0 o más).</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
+      <mat-label>Motivo</mat-label>
+      <input matInput formControlName="motivo" maxlength="250" placeholder="Ej.: conteo mensual, se rompieron dos" autocomplete="off" />
+      @if (ajuste.controls.motivo.invalid) {
+      <mat-error>Escribí el motivo (al menos 5 caracteres).</mat-error>
+      }
+    </mat-form-field>
+    @if (errorGuardar()) {
+    <div class="alert" role="alert">{{ errorGuardar() }}</div>
+    }
+    <div class="panel-actions">
+      <button mat-button type="button" (click)="modo.set('ver')" [disabled]="guardando()">Cancelar</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="guardando()">
+        @if (guardando()) {
+        <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+        }
+        Guardar ajuste
+      </button>
+    </div>
+  </form>
+  }
+
+  <!-- History -->
+  <h3 class="history-title">Movimientos</h3>
+  @if (cargando()) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  } @else if (errorCarga()) {
+  <div class="alert" role="alert">
+    {{ errorCarga() }}
+    <button mat-button color="primary" type="button" (click)="cargarHistorial()">Reintentar</button>
+  </div>
+  } @else if (movimientos().length === 0) {
+  <p class="muted small">Todavía no hay movimientos de stock para este artículo.</p>
+  } @else {
+  <ul class="history">
+    @for (m of movimientos(); track m.id) {
+    <li class="mov">
+      <span [class]="'mov-icon mov-icon--' + m.tipo.toLowerCase()">
+        <i class="iconify" [attr.data-icon]="tipos[m.tipo].icon"></i>
+      </span>
+      <div class="mov-main">
+        <div class="mov-head">
+          <strong>{{ tipos[m.tipo].label }}</strong>
+          @if (m.ventaId) {
+          <button type="button" class="link" (click)="verVenta(m.ventaId)">Factura N.º {{ numeroFactura(m.ventaId) }}</button>
+          }
+          @if (m.proveedor) {
+          <span class="muted">· {{ m.proveedor.nombre }}</span>
+          }
+        </div>
+        @if (mostrarMotivo(m)) {
+        <div class="mov-reason">{{ m.motivo }}</div>
+        }
+        <div class="mov-meta muted">{{ fecha(m.fecha) }} · {{ m.usuarioNombre }}</div>
+      </div>
+      <div class="mov-nums">
+        @if (m.tipo === 'INICIAL') {
+        <span class="mov-qty">{{ m.existencia.toLocaleString('es-PY') }}</span>
+        } @else {
+        <span [class]="'mov-qty ' + (m.cantidad > 0 ? 'mov-qty--in' : 'mov-qty--out')">{{ conSigno(m.cantidad) }}</span>
+        }
+        <span class="mov-after muted">queda {{ m.existencia.toLocaleString('es-PY') }}</span>
+      </div>
+    </li>
+    }
+  </ul>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>

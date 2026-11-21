@@ -371,3 +371,14 @@ $danger: #b42318;
   align-items: center;
   gap: 10px;
 }
+
+/* Stock warnings (they never block saving). */
+.stock-low {
+  font-weight: 700;
+  color: #b42318;
+}
+.note--stock {
+  color: #b54708;
+  background: #fffaeb;
+  border-color: #fedf89;
+}

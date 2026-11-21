@@ -66,6 +66,7 @@ export class ArticuloFormDialogComponent implements OnInit, OnDestroy {
     tasaIva: [10 as TasaIva, Validators.required],
     unidadMedidaId: [null as number | null, Validators.required],
     proveedorId: [null as number | null, Validators.required],
+    stockMinimo: [0 as number | null, [Validators.min(0), Validators.max(1000000)]],
   });
 
   private readonly valores = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
@@ -166,6 +167,7 @@ export class ArticuloFormDialogComponent implements OnInit, OnDestroy {
         tasaIva: a.tasaIva ?? 10,
         unidadMedidaId: a.unidadMedida?.id ?? null,
         proveedorId: a.proveedor?.id ?? null,
+        stockMinimo: a.stockMinimo ?? 0,
       });
     }
 
@@ -208,6 +210,7 @@ export class ArticuloFormDialogComponent implements OnInit, OnDestroy {
       tasaIva: v.tasaIva,
       unidadMedida: { id: v.unidadMedidaId! },
       proveedor: { id: v.proveedorId! },
+      stockMinimo: Math.max(0, Math.round(Number(v.stockMinimo) || 0)),
       // The photo has its own endpoints (the backend ignores this field).
       nombreImagen: this.data.articulo?.nombreImagen ?? null,
     };

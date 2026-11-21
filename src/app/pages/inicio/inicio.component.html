@@ -78,6 +78,46 @@
   }
 </section>
 
+<!-- Low stock -->
+@if (!loading() && pocoStock() !== null) {
+<mat-card class="cardWithShadow low-stock">
+  <mat-card-content class="p-24">
+    <div class="section-head">
+      <div>
+        <h2>Poco stock</h2>
+        <p>
+          @if (pocoStockTotal() === 0) { Todos los artículos están por encima de su mínimo. }
+          @else { {{ pocoStockTotal() }} {{ pocoStockTotal() === 1 ? 'artículo necesita' : 'artículos necesitan' }} reposición }
+        </p>
+      </div>
+      <a mat-button color="primary" routerLink="/articulos">
+        Ver artículos
+        <i class="iconify icon-18 m-l-4" data-icon="solar:arrow-right-line-duotone"></i>
+      </a>
+    </div>
+    @if (pocoStockTotal() > 0) {
+    <ul class="stock-list">
+      @for (a of pocoStock(); track a.id) {
+      <li>
+        <button type="button" class="stock-item" (click)="verStock(a)" [attr.aria-label]="'Ver stock de ' + a.nombre">
+          <app-articulo-thumb [articulo]="a" [size]="36" [zoomable]="false" />
+          <span class="stock-name">{{ a.nombre }}</span>
+          <span [class]="'stock-badge estado--' + estadoStock(a)">
+            {{ estadoStock(a) === 'sin' ? 'Sin stock' : cantidadConUnidad(a.existencia, a.unidadMedida) }}
+            @if (a.existencia < 0) { ({{ a.existencia }}) }
+          </span>
+        </button>
+      </li>
+      }
+    </ul>
+    @if (pocoStockTotal() > pocoStock()!.length) {
+    <p class="muted small more">Y {{ pocoStockTotal() - pocoStock()!.length }} más en Artículos (filtro "Poco o sin stock").</p>
+    }
+    }
+  </mat-card-content>
+</mat-card>
+}
+
 <!-- Latest sales -->
 <mat-card class="cardWithShadow">
   <mat-card-content class="p-24">
