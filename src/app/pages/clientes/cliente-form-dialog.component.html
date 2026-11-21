@@ -24,10 +24,11 @@
     </div>
 
     <div class="frow">
-      <mat-form-field appearance="outline">
+      <!-- dynamic: the hint can take two lines on narrow dialogs without covering the next field -->
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Cédula o RUC</mat-label>
         <input matInput formControlName="ciRuc" maxlength="20" autocomplete="off" placeholder="4558334-9" />
-        <mat-hint>Cédula sola o RUC con dígito verificador.</mat-hint>
+        <mat-hint>RUC con guion: 80012345-6</mat-hint>
         @if (form.controls.ciRuc.hasError('required')) {
         <mat-error>La cédula o RUC es obligatoria.</mat-error>
         } @else if (form.controls.ciRuc.hasError('pattern')) {

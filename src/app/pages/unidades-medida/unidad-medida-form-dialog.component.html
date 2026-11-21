@@ -14,7 +14,7 @@
         }
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Plural</mat-label>
         <input
           matInput
@@ -25,7 +25,7 @@
           (input)="pluralEditado(form.controls.plural.value)"
         />
         @if (!editando) {
-        <mat-hint>Se completa solo; podés corregirlo.</mat-hint>
+        <mat-hint>Sugerido; podés cambiarlo.</mat-hint>
         }
         @if (form.controls.plural.hasError('required') || form.controls.plural.hasError('pattern')) {
         <mat-error>El plural es obligatorio.</mat-error>
