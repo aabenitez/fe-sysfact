@@ -1,5 +1,5 @@
 import { NavItem } from './nav-item/nav-item';
-import { ROLES_CATALOGO, ROL_ADMIN } from '../../../core/auth/permisos';
+import { ROLES_CATALOGO, ROLES_COBROS, ROL_ADMIN } from '../../../core/auth/permisos';
 
 export const navItems: NavItem[] = [
   {
@@ -14,6 +14,12 @@ export const navItems: NavItem[] = [
     displayName: 'Ventas',
     iconName: 'solar:cart-large-2-line-duotone',
     route: '/ventas',
+  },
+  {
+    displayName: 'Por cobrar',
+    iconName: 'solar:wallet-money-line-duotone',
+    route: '/cobros',
+    roles: ROLES_COBROS,
   },
   {
     displayName: 'Clientes',

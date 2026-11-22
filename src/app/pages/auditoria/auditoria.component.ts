@@ -131,12 +131,31 @@ export class AuditoriaComponent implements OnInit {
     if (r.entidad === 'CLIENTE') return `Cliente #${r.entidadId}`;
     if (r.entidad === 'UNIDAD_MEDIDA') return `Unidad de medida #${r.entidadId}`;
     if (r.entidad === 'STOCK') return `Stock del artículo #${r.entidadId}`;
+    if (r.entidad === 'COBRO') {
+      const v = this.ventaDelCobro(r);
+      return v ? `Cobro de la factura N.º ${numeroFactura(v)}` : `Cobro #${r.entidadId}`;
+    }
     return `${r.entidad} #${r.entidadId}`;
   }
 
-  /** Router link of the record, when it still has a page. */
-  enlace(r: Auditoria): unknown[] | null {
-    return r.entidad === 'VENTA' && r.entidadId ? ['/ventas', r.entidadId] : null;
+  /** Id of the sale whose page the entry links to (the sale itself, or a payment's sale). */
+  facturaDe(r: Auditoria): number | null {
+    if (r.entidad === 'VENTA') return r.entidadId ?? null;
+    if (r.entidad === 'COBRO') return this.ventaDelCobro(r);
+    return null;
+  }
+
+  /** A payment's snapshot keeps the id of its sale. */
+  private ventaDelCobro(r: Auditoria): number | null {
+    for (const datos of [r.datosDespues, r.datosAntes]) {
+      try {
+        const o = (typeof datos === 'string' ? JSON.parse(datos) : datos) as { ventaId?: number } | null;
+        if (o?.ventaId) return o.ventaId;
+      } catch {
+        // Not JSON: nothing to link.
+      }
+    }
+    return null;
   }
 
   private readonly diffs = new Map<number, ResultadoDiff>();

@@ -169,6 +169,11 @@
             <span class="pill pill--anulada" [matTooltip]="v.anulacionMotivo ? 'Motivo: ' + v.anulacionMotivo : ''">Anulada</span>
             } @else {
             <span class="pill" [class.pill--credit]="v.condicionVenta === 'CRE'">{{ condicionLabel(v.condicionVenta) }}</span>
+            @if (v.condicionVenta === 'CRE') {
+            <div class="saldo-linea" [class.saldo-linea--pagada]="!v.saldo">
+              {{ v.saldo ? 'Debe ' + formatGs(v.saldo) : 'Pagada' }}
+            </div>
+            }
             }
           </td>
         </ng-container>

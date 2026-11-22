@@ -2,7 +2,7 @@
 <div class="page-head">
   <div>
     <h1>Auditoría</h1>
-    <p>Quién creó, editó, anuló o eliminó ventas, clientes, unidades de medida y movimientos de stock. Los registros no se pueden modificar ni borrar.</p>
+    <p>Quién creó, editó, anuló o eliminó ventas, cobros, clientes, unidades de medida y movimientos de stock. Los registros no se pueden modificar ni borrar.</p>
   </div>
   <button mat-stroked-button color="primary" (click)="buscar()" [disabled]="loading()">
     <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
@@ -108,10 +108,10 @@
 
         @if (abiertos().has(r.id)) {
         <div class="entry-data">
-          @if (enlace(r); as link) {
-          <a mat-stroked-button color="primary" [routerLink]="link" class="open-link">
+          @if (facturaDe(r); as v) {
+          <a mat-stroked-button color="primary" [routerLink]="['/ventas', v]" class="open-link">
             <i class="iconify icon-18 m-r-6" data-icon="solar:document-text-line-duotone"></i>
-            Abrir la factura N.º {{ numeroFactura(r.entidadId ?? 0) }}
+            Abrir la factura N.º {{ numeroFactura(v) }}
           </a>
           }
           @if (diff(r); as d) {

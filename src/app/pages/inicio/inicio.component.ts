@@ -8,7 +8,8 @@ import { MaterialModule } from '../../material.module';
 import { API_URL } from '../../core/api.config';
 import { AuthService } from '../../core/auth/auth.service';
 import { formatGs } from '../../core/format';
-import { ROLES_CATALOGO } from '../../core/auth/permisos';
+import { ROLES_CATALOGO, ROLES_COBROS } from '../../core/auth/permisos';
+import { CuentaPorCobrar } from '../../core/models/cobro.model';
 import { Articulo, cantidadConUnidad, estadoStock } from '../../core/models/articulo.model';
 import { ArticuloThumbComponent } from '../../core/ui/articulo-thumb.component';
 import { StockDialogComponent, StockDialogData } from '../articulos/stock-dialog.component';
@@ -56,6 +57,9 @@ export class InicioComponent implements OnInit {
   readonly estadoStock = estadoStock;
   readonly cantidadConUnidad = cantidadConUnidad;
 
+  /** Accounts receivable summary (only for the roles that collect); null when hidden or unreadable. */
+  readonly porCobrar = signal<{ total: number; vencido: number; facturas: number; vencidas: number } | null>(null);
+
   readonly loading = signal(true);
   readonly loadError = signal(false);
   readonly kpis = signal<Kpi[]>([]);
@@ -79,10 +83,20 @@ export class InicioComponent implements OnInit {
       unidades: get<unknown>('unidades-de-medida'),
       parametros: get<unknown>('parametros'),
       proveedores: get<unknown>('proveedores'),
+      pendientes: ROLES_COBROS.includes(this.auth.rol()) ? get<CuentaPorCobrar>('cobros/pendientes') : of(null),
     }).subscribe((r) => {
+      if (r.pendientes) {
+        const vencidas = r.pendientes.filter((c) => c.diasAtraso > 0);
+        this.porCobrar.set({
+          total: r.pendientes.reduce((a, c) => a + c.saldo, 0),
+          vencido: vencidas.reduce((a, c) => a + c.saldo, 0),
+          facturas: r.pendientes.length,
+          vencidas: vencidas.length,
+        });
+      }
       // Cancelled sales do not count.
       const ventas = (r.ventas ?? []).filter((v) => v.estado !== 'ANULADA');
-      this.loadError.set(Object.values(r).every((v) => v === null));
+      this.loadError.set(Object.entries(r).every(([k, v]) => k === 'pendientes' || v === null));
       this.totalVendido.set(ventas.reduce((acc, v) => acc + (v.totalFactura ?? 0), 0));
       this.ventas.set(ventas.slice(0, 5));
       this.mostrarPocoStock(r.articulos);

@@ -41,6 +41,12 @@ export interface Venta {
   anulacionFecha: string | null;
   anulacionUsuario: Pick<Vendedor, 'id' | 'nombres' | 'apellidos'> | null;
   anulacionMotivo: string | null;
+  /** Sum of the valid payments (credit sales). */
+  cobrado?: number;
+  /** What is still owed; always 0 for cash or cancelled sales. */
+  saldo?: number;
+  /** Credit sales: due date (sale date plus the credit term), as yyyy-MM-dd. */
+  vencimiento?: string | null;
 }
 
 /** Body for POST /ventas and PUT /ventas/{id}. IVA and totals are computed by the backend. */

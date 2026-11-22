@@ -516,3 +516,82 @@ $border: #e0e6eb;
     color: rgba(180, 35, 24, 0.18);
   }
 }
+
+/* ---------------- Payments ---------------- */
+.totals {
+  .cobrado {
+    margin-top: 8px;
+  }
+  .saldo {
+    font-weight: 800;
+    color: #b54708;
+  }
+  .saldo--pagada {
+    color: #067647;
+  }
+}
+
+.cobros {
+  margin-top: 24px;
+}
+
+.cobro-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cobro {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f2f5;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+  &--anulado .cobro-head strong {
+    text-decoration: line-through;
+    color: #707a82;
+  }
+}
+
+.cobro-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 18px;
+  color: #067647;
+  background: #ecfdf3;
+}
+.cobro--anulado .cobro-icon {
+  color: #707a82;
+  background: #eef1f5;
+}
+
+.cobro-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cobro-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+
+  strong {
+    font-size: 15px;
+    color: #111c2d;
+  }
+}
+
+.cobro-anulacion {
+  margin-top: 2px;
+  color: #b42318;
+  overflow-wrap: anywhere;
+}

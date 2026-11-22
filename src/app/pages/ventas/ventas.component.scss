@@ -358,3 +358,16 @@ $credit: #c27803;
 .row--anulada td {
   background: #fcfcfd;
 }
+
+/* Credit sales: what is still owed. */
+.saldo-linea {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #b54708;
+
+  &--pagada {
+    color: #067647;
+  }
+}

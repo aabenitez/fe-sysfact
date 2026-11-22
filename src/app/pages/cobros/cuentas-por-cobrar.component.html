@@ -1,0 +1,143 @@
+<!-- Header -->
+<div class="page-head">
+  <div>
+    <h1>Por cobrar</h1>
+    <p>Ventas a crédito con saldo pendiente, agrupadas por cliente.</p>
+  </div>
+  <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+    Actualizar
+  </button>
+</div>
+
+@if (aviso()) {
+<div class="aviso" role="status">
+  <i class="iconify" data-icon="solar:check-circle-line-duotone"></i>
+  <span>{{ aviso() }}</span>
+  <button mat-icon-button (click)="aviso.set(null)" aria-label="Cerrar aviso"><mat-icon>close</mat-icon></button>
+</div>
+}
+
+<!-- Summary -->
+<div class="stats">
+  <div class="stat">
+    <span class="stat-icon"><i class="iconify" data-icon="solar:wallet-money-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() ? '—' : formatGs(totalSaldo()) }}</div>
+      <div class="stat-label">Total por cobrar</div>
+    </div>
+  </div>
+  <button
+    type="button"
+    class="stat stat--button"
+    [class.stat--alert]="!loading() && totalVencido() > 0"
+    [class.stat--on]="soloVencidas()"
+    (click)="soloVencidas.set(!soloVencidas())"
+    [disabled]="loading() || totalVencido() === 0"
+    [attr.aria-pressed]="soloVencidas()"
+  >
+    <span class="stat-icon stat-icon--red"><i class="iconify" data-icon="solar:alarm-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() ? '—' : formatGs(totalVencido()) }}</div>
+      <div class="stat-label">Vencido {{ soloVencidas() ? '· mostrando solo esto' : '' }}</div>
+    </div>
+  </button>
+  <div class="stat">
+    <span class="stat-icon stat-icon--amber"><i class="iconify" data-icon="solar:users-group-rounded-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ loading() ? '—' : deudores().length }}</div>
+      <div class="stat-label">{{ deudores().length === 1 ? 'Cliente con deuda' : 'Clientes con deuda' }}</div>
+    </div>
+  </div>
+</div>
+
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <div class="filters">
+      <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+        <i matPrefix class="iconify field-icon" data-icon="solar:magnifer-line-duotone"></i>
+        <input
+          matInput
+          [ngModel]="texto()"
+          (ngModelChange)="texto.set($event)"
+          placeholder="Buscar por cliente, CI/RUC o N.º de factura…"
+          autocomplete="off"
+        />
+      </mat-form-field>
+      <mat-slide-toggle [checked]="soloVencidas()" (change)="soloVencidas.set($event.checked)" color="primary">
+        Solo vencidas
+      </mat-slide-toggle>
+    </div>
+
+    @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    @for (i of [1, 2, 3]; track i) {
+    <div class="skeleton-row"></div>
+    }
+    } @else if (error()) {
+    <div class="state">
+      <i class="iconify state-icon state-icon--error" data-icon="solar:danger-triangle-line-duotone"></i>
+      <h3>No se pudieron cargar las cuentas por cobrar</h3>
+      <p>Verificá que el backend esté levantado e intentá de nuevo.</p>
+      <button mat-flat-button color="primary" (click)="cargar()">Reintentar</button>
+    </div>
+    } @else if (cuentas().length === 0) {
+    <div class="state">
+      <i class="iconify state-icon state-icon--ok" data-icon="solar:check-circle-line-duotone"></i>
+      <h3>No hay nada pendiente de cobro</h3>
+      <p>Todas las ventas a crédito están pagadas.</p>
+    </div>
+    } @else if (filtrados().length === 0) {
+    <div class="state">
+      <i class="iconify state-icon" data-icon="solar:magnifer-line-duotone"></i>
+      <h3>Ningún cliente coincide con el filtro</h3>
+      <button mat-stroked-button color="primary" (click)="limpiar()">Limpiar filtros</button>
+    </div>
+    } @else {
+    <div class="deudores">
+      @for (d of filtrados(); track d.clave) {
+      <section class="deudor" [class.deudor--vencido]="d.vencido > 0">
+        <header class="deudor-head">
+          <div class="deudor-name">
+            <strong>{{ d.nombre }}</strong>
+            <span class="muted small">
+              @if (d.ciRuc) { CI/RUC {{ d.ciRuc }} }
+              @if (d.ciRuc && d.telefono) { · }
+              @if (d.telefono) { <a class="tel" [href]="'tel:' + d.telefono">{{ d.telefono }}</a> }
+            </span>
+          </div>
+          <div class="deudor-total">
+            <span class="muted small">{{ d.cuentas.length }} {{ d.cuentas.length === 1 ? 'factura' : 'facturas' }}</span>
+            <strong>{{ formatGs(d.saldo) }}</strong>
+            @if (d.vencido > 0) {
+            <span class="vencido">{{ formatGs(d.vencido) }} vencido</span>
+            }
+          </div>
+        </header>
+        <ul class="facturas">
+          @for (c of d.cuentas; track c.ventaId) {
+          <li class="factura">
+            <div class="factura-main">
+              <a class="factura-num" [routerLink]="['/ventas', c.ventaId]">Factura N.º {{ numeroFactura(c.ventaId) }}</a>
+              <span class="muted small">{{ c.fecha | date: 'd/MM/y' }} · vence {{ c.vencimiento | date: 'd/MM/y' }}</span>
+              <span class="chip" [class.chip--vencida]="c.diasAtraso > 0">{{ textoVencimiento(c) }}</span>
+            </div>
+            <div class="factura-nums">
+              <span class="muted small">
+                Total {{ formatGs(c.total) }}@if (c.cobrado > 0) { · cobrado {{ formatGs(c.cobrado) }} }
+              </span>
+              <strong>Debe {{ formatGs(c.saldo) }}</strong>
+            </div>
+            <button mat-flat-button color="primary" class="cobrar" (click)="cobrar(d, c)">
+              <i class="iconify icon-18 m-r-6" data-icon="solar:wallet-money-line-duotone"></i>
+              Cobrar
+            </button>
+          </li>
+          }
+        </ul>
+      </section>
+      }
+    </div>
+    }
+  </mat-card-content>
+</mat-card>

@@ -14,6 +14,8 @@ export const ROLES_ALTA_CLIENTES = [ROL_ADMIN, ROL_CAJERO];
 export const ROLES_CATALOGO = [ROL_ADMIN, ROL_CARGADOR];
 /** Register goods received. Correcting the count (adjustments) is only for the Administrador. */
 export const ROLES_INGRESO_STOCK = [ROL_ADMIN, ROL_CARGADOR];
+/** Accounts receivable: see what is owed and register payments of credit sales. */
+export const ROLES_COBROS = [ROL_ADMIN, ROL_CAJERO];
 
 export function puedeVender(rol: string): boolean {
   return ROLES_VENTAS.includes(rol);

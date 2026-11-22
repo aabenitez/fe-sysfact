@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
 import { adminGuard, authGuard, rolGuard } from './core/auth/auth.guard';
-import { ROLES_CATALOGO, ROLES_VENTAS } from './core/auth/permisos';
+import { ROLES_CATALOGO, ROLES_COBROS, ROLES_VENTAS } from './core/auth/permisos';
 
 export const routes: Routes = [
   {
@@ -46,6 +46,13 @@ export const routes: Routes = [
         title: 'Factura · Sysfact',
         loadComponent: () =>
           import('./pages/ventas/venta-detalle.component').then((m) => m.VentaDetalleComponent),
+      },
+      {
+        path: 'cobros',
+        title: 'Por cobrar · Sysfact',
+        canActivate: [rolGuard(...ROLES_COBROS)],
+        loadComponent: () =>
+          import('./pages/cobros/cuentas-por-cobrar.component').then((m) => m.CuentasPorCobrarComponent),
       },
       {
         path: 'clientes',

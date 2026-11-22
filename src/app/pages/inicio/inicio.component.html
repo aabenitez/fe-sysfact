@@ -78,6 +78,42 @@
   }
 </section>
 
+<!-- Accounts receivable -->
+@if (!loading() && porCobrar(); as pc) {
+<mat-card class="cardWithShadow por-cobrar">
+  <mat-card-content class="p-24">
+    <div class="section-head">
+      <div>
+        <h2>Por cobrar</h2>
+        <p>
+          @if (pc.facturas === 0) { No hay ventas a crédito pendientes de cobro. }
+          @else { {{ pc.facturas }} {{ pc.facturas === 1 ? 'factura a crédito' : 'facturas a crédito' }} con saldo }
+        </p>
+      </div>
+      <a mat-button color="primary" routerLink="/cobros">
+        Ver cuentas
+        <i class="iconify icon-18 m-l-4" data-icon="solar:arrow-right-line-duotone"></i>
+      </a>
+    </div>
+    @if (pc.facturas > 0) {
+    <div class="pc-nums">
+      <div class="pc-num">
+        <span class="pc-label">Total por cobrar</span>
+        <strong>{{ money(pc.total) }}</strong>
+      </div>
+      <div class="pc-num" [class.pc-num--alert]="pc.vencido > 0">
+        <span class="pc-label">Vencido</span>
+        <strong>{{ money(pc.vencido) }}</strong>
+        @if (pc.vencidas > 0) {
+        <span class="pc-label">{{ pc.vencidas }} {{ pc.vencidas === 1 ? 'factura' : 'facturas' }}</span>
+        }
+      </div>
+    </div>
+    }
+  </mat-card-content>
+</mat-card>
+}
+
 <!-- Low stock -->
 @if (!loading() && pocoStock() !== null) {
 <mat-card class="cardWithShadow low-stock">

@@ -6,9 +6,15 @@
   </a>
   @if (venta()) {
   <div class="toolbar-actions">
+    @if (puedeCobrar() && esCredito() && !anulada() && saldo() > 0) {
+    <button mat-flat-button color="primary" (click)="registrarCobro()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:wallet-money-line-duotone"></i>
+      Registrar cobro
+    </button>
+    }
     @if (puedeVender()) {
-    <span [matTooltip]="bloqueo() ?? ''">
-      <button mat-stroked-button color="warn" (click)="anular()" [disabled]="!!bloqueo()">
+    <span [matTooltip]="bloqueoAnular() ?? ''">
+      <button mat-stroked-button color="warn" (click)="anular()" [disabled]="!!bloqueoAnular()">
         <i class="iconify icon-18 m-r-6" data-icon="solar:close-circle-line-duotone"></i>
         Anular
       </button>
@@ -107,6 +113,9 @@
         <span class="meta-label">Fecha de emisión</span>
         <strong>{{ v.fecha | date: "d 'de' MMMM 'de' y" }}</strong>
         <span class="muted">{{ v.fecha | date: 'HH:mm' }} h</span>
+        @if (v.vencimiento && !anulada()) {
+        <span class="muted">Vence el {{ v.vencimiento | date: 'd/MM/y' }}</span>
+        }
       </div>
       <div class="meta-block">
         <span class="meta-label">Atendido por</span>
@@ -170,6 +179,12 @@
         <div class="row discount"><span>Descuentos</span><span>− {{ formatGs(v.totalDescuento) }}</span></div>
         }
         <div class="row grand"><span>Total a pagar</span><span>{{ formatGs(v.totalFactura) }}</span></div>
+        @if (esCredito() && !anulada()) {
+        <div class="row cobrado"><span>Cobrado</span><span>{{ formatGs(v.cobrado ?? 0) }}</span></div>
+        <div class="row saldo" [class.saldo--pagada]="saldo() === 0">
+          <span>{{ saldo() === 0 ? 'Pagada' : 'Saldo' }}</span><span>{{ formatGs(saldo()) }}</span>
+        </div>
+        }
       </div>
     </section>
     @if (anulada()) {
@@ -177,6 +192,51 @@
     }
   </mat-card-content>
 </mat-card>
+
+<!-- Payments of a credit sale (not printed) -->
+@if (esCredito()) {
+<mat-card class="cardWithShadow no-print cobros">
+  <mat-card-content class="p-24">
+    <h2 class="hist-title">
+      <i class="iconify" data-icon="solar:wallet-money-line-duotone"></i>
+      Cobros
+    </h2>
+    @if (cobrosError()) {
+    <p class="muted">No se pudieron cargar los cobros. <button mat-button color="primary" (click)="cargarCobros(v.id)">Reintentar</button></p>
+    } @else if (cobros() === null) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    } @else if (cobros()!.length === 0) {
+    <p class="muted">Todavía no se registró ningún cobro de esta factura.</p>
+    } @else {
+    <ul class="cobro-list">
+      @for (c of cobros(); track c.id) {
+      <li class="cobro" [class.cobro--anulado]="c.estado === 'ANULADO'">
+        <span class="cobro-icon"><i class="iconify" [attr.data-icon]="formaPagoIcon(c.formaPago)"></i></span>
+        <div class="cobro-main">
+          <div class="cobro-head">
+            <strong>{{ formatGs(c.monto) }}</strong>
+            <span class="muted">{{ formaPagoLabel(c.formaPago) }}@if (c.referencia) { · {{ c.referencia }} }</span>
+            @if (c.estado === 'ANULADO') {
+            <span class="pill pill--anulada">Anulado</span>
+            }
+          </div>
+          <div class="muted small">{{ c.fecha | date: "d/MM/y HH:mm" }} · {{ c.usuarioNombre }}</div>
+          @if (c.estado === 'ANULADO') {
+          <div class="small cobro-anulacion">
+            Anulado el {{ c.anulacionFecha | date: "d/MM/y HH:mm" }} por {{ c.anulacionUsuarioNombre }}. Motivo: {{ c.anulacionMotivo }}
+          </div>
+          }
+        </div>
+        @if (puedeAnularCobro(c)) {
+        <button mat-button color="warn" (click)="anularCobro(c)">Anular</button>
+        }
+      </li>
+      }
+    </ul>
+    }
+  </mat-card-content>
+</mat-card>
+}
 
 <!-- Change history (not printed) -->
 <mat-card class="cardWithShadow no-print historial">

@@ -18,7 +18,11 @@ import { VentaService } from '../../core/services/venta.service';
 import { BrandingService } from '../../core/branding/branding.service';
 import { formatGs } from '../../core/format';
 import { AuthService } from '../../core/auth/auth.service';
-import { ROL_ADMIN, puedeVender } from '../../core/auth/permisos';
+import { ROL_ADMIN, ROLES_COBROS, puedeVender } from '../../core/auth/permisos';
+import { Cobro, formaPagoIcon, formaPagoLabel } from '../../core/models/cobro.model';
+import { CobroService } from '../../core/services/cobro.service';
+import { CobroDialogComponent, CobroDialogData } from '../cobros/cobro-dialog.component';
+import { AnularCobroDialogComponent } from '../cobros/anular-cobro-dialog.component';
 import { Auditoria, accionIcon, accionLabel } from '../../core/models/auditoria.model';
 import { AnularVentaDialogComponent } from './anular-venta-dialog.component';
 
@@ -36,6 +40,23 @@ export class VentaDetalleComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly auth = inject(AuthService);
+  private readonly cobroService = inject(CobroService);
+
+  /** Payments of a credit sale (cancelled ones included); null while loading. */
+  readonly cobros = signal<Cobro[] | null>(null);
+  readonly cobrosError = signal(false);
+  readonly puedeCobrar = computed(() => ROLES_COBROS.includes(this.auth.rol()));
+  readonly esCredito = computed(() => this.venta()?.condicionVenta === 'CRE');
+  readonly saldo = computed(() => this.venta()?.saldo ?? 0);
+  /** Why the sale cannot be cancelled: the general block, or payments that would be left hanging. */
+  readonly bloqueoAnular = computed<string | null>(() => {
+    const b = this.bloqueo();
+    if (b) return b;
+    const cobrado = this.venta()?.cobrado ?? 0;
+    return cobrado > 0 ? `Tiene cobros por ${formatGs(cobrado)}: anulá primero los cobros.` : null;
+  });
+  readonly formaPagoLabel = formaPagoLabel;
+  readonly formaPagoIcon = formaPagoIcon;
 
   readonly historial = signal<Auditoria[] | null>(null);
   readonly historialError = signal(false);
@@ -95,6 +116,7 @@ export class VentaDetalleComponent implements OnInit {
         if (!v) this.error.set(`No existe la factura N.º ${numeroFactura(id)}.`);
         this.loading.set(false);
         if (v) this.cargarHistorial(v.id);
+        if (v?.condicionVenta === 'CRE') this.cargarCobros(v.id);
       },
       error: (e: HttpErrorResponse) => {
         this.error.set(
@@ -140,6 +162,64 @@ export class VentaDetalleComponent implements OnInit {
     });
   }
 
+  cargarCobros(id: number): void {
+    this.cobrosError.set(false);
+    this.cobroService.porVenta(id).subscribe({
+      next: (l) => this.cobros.set(l ?? []),
+      error: () => {
+        this.cobros.set(null);
+        this.cobrosError.set(true);
+      },
+    });
+  }
+
+  /** A cashier may only cancel payments of today, like sales. */
+  puedeAnularCobro(c: Cobro): boolean {
+    return this.puedeCobrar() && c.estado === 'VIGENTE' && (this.auth.rol() === ROL_ADMIN || esDeHoy(c.fecha));
+  }
+
+  registrarCobro(): void {
+    const v = this.venta();
+    if (!v || this.saldo() <= 0) return;
+    const data: CobroDialogData = {
+      ventaId: v.id,
+      cliente: clienteNombre(v),
+      total: v.totalFactura,
+      cobrado: v.cobrado ?? 0,
+      saldo: this.saldo(),
+    };
+    this.dialog
+      .open(CobroDialogComponent, { data, width: '520px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((c) => {
+        if (!c) return;
+        const quedo = this.saldo() - c.monto;
+        this.aviso.set(
+          `Se registró el cobro de ${formatGs(c.monto)}. ` +
+            (quedo <= 0 ? 'La factura quedó pagada.' : `Queda debiendo ${formatGs(quedo)}.`)
+        );
+        this.recargarCobro(v.id);
+      });
+  }
+
+  anularCobro(c: Cobro): void {
+    if (!this.puedeAnularCobro(c)) return;
+    this.dialog
+      .open(AnularCobroDialogComponent, { data: c, width: '520px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((anulado) => {
+        if (!anulado) return;
+        this.aviso.set(`El cobro de ${formatGs(anulado.monto)} quedó anulado y volvió al saldo.`);
+        this.recargarCobro(c.ventaId);
+      });
+  }
+
+  /** After a payment changes: the sale's balance and its list of payments. */
+  private recargarCobro(id: number): void {
+    this.service.obtener(id).subscribe({ next: (v) => v && this.venta.set(v) });
+    this.cargarCobros(id);
+  }
+
   editar(): void {
     const v = this.venta();
     if (v && !this.bloqueo()) this.router.navigate(['/ventas', v.id, 'editar']);
@@ -147,7 +227,7 @@ export class VentaDetalleComponent implements OnInit {
 
   anular(): void {
     const v = this.venta();
-    if (!v || this.bloqueo()) return;
+    if (!v || this.bloqueoAnular()) return;
     this.dialog
       .open<AnularVentaDialogComponent, Venta, Venta>(AnularVentaDialogComponent, {
         data: v,
