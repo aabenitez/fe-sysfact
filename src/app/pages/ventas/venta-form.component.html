@@ -109,6 +109,29 @@
             <mat-button-toggle value="CRE">Crédito</mat-button-toggle>
           </mat-button-toggle-group>
         </div>
+
+        @if (condicion() === 'CON') {
+        <div class="forma-pago">
+          <span class="label" id="forma-pago-label">Forma de pago</span>
+          <div class="formas" role="radiogroup" aria-labelledby="forma-pago-label">
+            @for (f of formas; track f.value) {
+            <button
+              type="button"
+              class="forma"
+              role="radio"
+              [attr.aria-checked]="formaPago() === f.value"
+              [class.forma--on]="formaPago() === f.value"
+              (click)="formaPago.set(f.value)"
+            >
+              <i class="iconify" [attr.data-icon]="f.icon"></i>
+              {{ f.label }}
+            </button>
+            }
+          </div>
+        </div>
+        } @else {
+        <p class="hint hint--credito">A crédito no se cobra ahora: los pagos se registran después, en «Por cobrar».</p>
+        }
       </mat-card-content>
     </mat-card>
 

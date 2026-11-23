@@ -2,7 +2,7 @@
 <div class="page-head">
   <div>
     <h1>Auditoría</h1>
-    <p>Quién creó, editó, anuló o eliminó ventas, cobros, clientes, unidades de medida y movimientos de stock. Los registros no se pueden modificar ni borrar.</p>
+    <p>Quién creó, editó, anuló o eliminó ventas, cobros, cierres de caja, clientes, unidades de medida y movimientos de stock. Los registros no se pueden modificar ni borrar.</p>
   </div>
   <button mat-stroked-button color="primary" (click)="buscar()" [disabled]="loading()">
     <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
@@ -112,6 +112,12 @@
           <a mat-stroked-button color="primary" [routerLink]="['/ventas', v]" class="open-link">
             <i class="iconify icon-18 m-r-6" data-icon="solar:document-text-line-duotone"></i>
             Abrir la factura N.º {{ numeroFactura(v) }}
+          </a>
+          }
+          @if (diaDelCierre(r); as dia) {
+          <a mat-stroked-button color="primary" routerLink="/caja" [queryParams]="{ fecha: dia }" class="open-link">
+            <i class="iconify icon-18 m-r-6" data-icon="solar:safe-square-line-duotone"></i>
+            Abrir la caja de ese día
           </a>
           }
           @if (diff(r); as d) {

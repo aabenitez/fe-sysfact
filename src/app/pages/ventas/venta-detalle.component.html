@@ -38,7 +38,13 @@
 <div class="aviso no-print" role="status">
   <i class="iconify" data-icon="solar:check-circle-line-duotone"></i>
   <span>{{ aviso() }}</span>
-  <button mat-icon-button (click)="aviso.set(null)" aria-label="Cerrar aviso"><mat-icon>close</mat-icon></button>
+  @if (avisoCobroId() && venta()) {
+  <a mat-stroked-button color="primary" class="aviso-btn" [routerLink]="['/ventas', venta()!.id, 'cobros', avisoCobroId(), 'recibo']" [queryParams]="{ imprimir: 1 }">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:printer-minimalistic-line-duotone"></i>
+    Imprimir recibo
+  </a>
+  }
+  <button mat-icon-button (click)="aviso.set(null); avisoCobroId.set(null)" aria-label="Cerrar aviso"><mat-icon>close</mat-icon></button>
 </div>
 }
 
@@ -179,6 +185,9 @@
         <div class="row discount"><span>Descuentos</span><span>− {{ formatGs(v.totalDescuento) }}</span></div>
         }
         <div class="row grand"><span>Total a pagar</span><span>{{ formatGs(v.totalFactura) }}</span></div>
+        @if (v.condicionVenta === 'CON' && v.formaPago) {
+        <div class="row cobrado"><span>Pagado con</span><span>{{ formaPagoLabel(v.formaPago) }}</span></div>
+        }
         @if (esCredito() && !anulada()) {
         <div class="row cobrado"><span>Cobrado</span><span>{{ formatGs(v.cobrado ?? 0) }}</span></div>
         <div class="row saldo" [class.saldo--pagada]="saldo() === 0">
@@ -227,9 +236,15 @@
           </div>
           }
         </div>
-        @if (puedeAnularCobro(c)) {
-        <button mat-button color="warn" (click)="anularCobro(c)">Anular</button>
-        }
+        <div class="cobro-actions">
+          <a mat-button color="primary" [routerLink]="['/ventas', v.id, 'cobros', c.id, 'recibo']" [attr.aria-label]="'Ver recibo N.º ' + numeroRecibo(c.id)">
+            <i class="iconify icon-18 m-r-4" data-icon="solar:bill-list-line-duotone"></i>
+            Recibo
+          </a>
+          @if (puedeAnularCobro(c)) {
+          <button mat-button color="warn" (click)="anularCobro(c)">Anular</button>
+          }
+        </div>
       </li>
       }
     </ul>

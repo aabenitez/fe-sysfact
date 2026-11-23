@@ -135,6 +135,10 @@ export class AuditoriaComponent implements OnInit {
       const v = this.ventaDelCobro(r);
       return v ? `Cobro de la factura N.º ${numeroFactura(v)}` : `Cobro #${r.entidadId}`;
     }
+    if (r.entidad === 'CAJA') {
+      const f = this.diaDelCierre(r);
+      return f ? `Caja del ${f.split('-').reverse().join('/')}` : `Cierre de caja #${r.entidadId}`;
+    }
     return `${r.entidad} #${r.entidadId}`;
   }
 
@@ -142,6 +146,20 @@ export class AuditoriaComponent implements OnInit {
   facturaDe(r: Auditoria): number | null {
     if (r.entidad === 'VENTA') return r.entidadId ?? null;
     if (r.entidad === 'COBRO') return this.ventaDelCobro(r);
+    return null;
+  }
+
+  /** Day (yyyy-MM-dd) of a cash closing entry, to open that day's cash page. */
+  diaDelCierre(r: Auditoria): string | null {
+    if (r.entidad !== 'CAJA') return null;
+    for (const datos of [r.datosDespues, r.datosAntes]) {
+      try {
+        const o = (typeof datos === 'string' ? JSON.parse(datos) : datos) as { fecha?: string } | null;
+        if (o?.fecha && /^\d{4}-\d{2}-\d{2}$/.test(o.fecha)) return o.fecha;
+      } catch {
+        // Not JSON: nothing to link.
+      }
+    }
     return null;
   }
 

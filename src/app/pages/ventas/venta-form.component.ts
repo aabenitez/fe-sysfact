@@ -18,6 +18,7 @@ import {
   numeroFactura,
 } from '../../core/models/venta.model';
 import { ArticuloService } from '../../core/services/articulo.service';
+import { FORMAS_PAGO, FormaPago } from '../../core/models/cobro.model';
 import { ClienteService } from '../../core/services/cliente.service';
 import { VentaService } from '../../core/services/venta.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -67,6 +68,9 @@ export class VentaFormComponent implements OnInit {
 
   readonly cliente = signal<Cliente | null>(null);
   readonly condicion = signal<CondicionVenta>('CON');
+  /** How a cash sale is paid (goes to the cash count). */
+  readonly formaPago = signal<FormaPago>('EFECTIVO');
+  readonly formas = FORMAS_PAGO;
   readonly lineas = signal<Linea[]>([]);
 
   /** Text typed in the client / article search boxes. */
@@ -204,6 +208,7 @@ export class VentaFormComponent implements OnInit {
       this.bloqueo.set('Solo un Administrador puede editar facturas de días anteriores.');
     }
     this.condicion.set(v.condicionVenta);
+    this.formaPago.set(v.formaPago ?? 'EFECTIVO');
     this.cliente.set(v.cliente ? (this.clientes().find((c) => c.id === v.cliente!.id) ?? v.cliente) : null);
     this.busquedaCliente.set(this.cliente() ? this.clienteTexto(this.cliente()!) : '');
     this.lineas.set(
@@ -299,6 +304,7 @@ export class VentaFormComponent implements OnInit {
     if (this.problema() || this.guardando() || this.bloqueo()) return;
     const body: VentaInput = {
       condicionVenta: this.condicion(),
+      formaPago: this.condicion() === 'CON' ? this.formaPago() : null,
       cliente: this.cliente() ? { id: this.cliente()!.id } : null,
       detallesVenta: this.lineas().map((l) => ({
         articulo: { id: l.articulo.id },

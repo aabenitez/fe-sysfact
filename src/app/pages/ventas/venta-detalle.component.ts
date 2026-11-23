@@ -19,7 +19,7 @@ import { BrandingService } from '../../core/branding/branding.service';
 import { formatGs } from '../../core/format';
 import { AuthService } from '../../core/auth/auth.service';
 import { ROL_ADMIN, ROLES_COBROS, puedeVender } from '../../core/auth/permisos';
-import { Cobro, formaPagoIcon, formaPagoLabel } from '../../core/models/cobro.model';
+import { Cobro, formaPagoIcon, formaPagoLabel, numeroRecibo } from '../../core/models/cobro.model';
 import { CobroService } from '../../core/services/cobro.service';
 import { CobroDialogComponent, CobroDialogData } from '../cobros/cobro-dialog.component';
 import { AnularCobroDialogComponent } from '../cobros/anular-cobro-dialog.component';
@@ -57,11 +57,14 @@ export class VentaDetalleComponent implements OnInit {
   });
   readonly formaPagoLabel = formaPagoLabel;
   readonly formaPagoIcon = formaPagoIcon;
+  readonly numeroRecibo = numeroRecibo;
 
   readonly historial = signal<Auditoria[] | null>(null);
   readonly historialError = signal(false);
   /** Shown once after saving or cancelling. */
   readonly aviso = signal<string | null>(null);
+  /** Payment just registered, to offer printing its receipt from the notice. */
+  readonly avisoCobroId = signal<number | null>(null);
 
   readonly anulada = computed(() => estaAnulada(this.venta()));
   readonly puedeVender = computed(() => puedeVender(this.auth.rol()));
@@ -194,6 +197,7 @@ export class VentaDetalleComponent implements OnInit {
       .subscribe((c) => {
         if (!c) return;
         const quedo = this.saldo() - c.monto;
+        this.avisoCobroId.set(c.id);
         this.aviso.set(
           `Se registró el cobro de ${formatGs(c.monto)}. ` +
             (quedo <= 0 ? 'La factura quedó pagada.' : `Queda debiendo ${formatGs(quedo)}.`)
@@ -209,6 +213,7 @@ export class VentaDetalleComponent implements OnInit {
       .afterClosed()
       .subscribe((anulado) => {
         if (!anulado) return;
+        this.avisoCobroId.set(null);
         this.aviso.set(`El cobro de ${formatGs(anulado.monto)} quedó anulado y volvió al saldo.`);
         this.recargarCobro(c.ventaId);
       });

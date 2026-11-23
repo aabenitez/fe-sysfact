@@ -1,0 +1,103 @@
+<!-- Toolbar (hidden when printing) -->
+<div class="toolbar no-print">
+  @if (venta(); as v) {
+  <a mat-button [routerLink]="['/ventas', v.id]" class="back">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:arrow-left-line-duotone"></i>
+    Volver a la factura
+  </a>
+  } @else {
+  <a mat-button routerLink="/cobros" class="back">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:arrow-left-line-duotone"></i>
+    Volver a Por cobrar
+  </a>
+  }
+  @if (cobro()) {
+  <button mat-flat-button color="primary" (click)="imprimir()">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:printer-minimalistic-line-duotone"></i>
+    Imprimir recibo
+  </button>
+  }
+</div>
+
+@if (loading()) {
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </mat-card-content>
+</mat-card>
+} @else if (error()) {
+<mat-card class="cardWithShadow">
+  <mat-card-content class="state">
+    <i class="iconify state-icon" data-icon="solar:bill-cross-line-duotone"></i>
+    <h3>{{ error() }}</h3>
+    <a mat-stroked-button routerLink="/cobros">Ir a Por cobrar</a>
+  </mat-card-content>
+</mat-card>
+} @else { @if (venta(); as v) { @if (cobro(); as c) {
+@if (anulado()) {
+<div class="anulado-banner no-print" role="note">
+  <i class="iconify" data-icon="solar:close-circle-line-duotone"></i>
+  <div>
+    <strong>Cobro anulado</strong>
+    <span>el {{ c.anulacionFecha | date: "d/MM/y 'a las' HH:mm" }} por {{ c.anulacionUsuarioNombre }}. Motivo: {{ c.anulacionMotivo }}</span>
+  </div>
+</div>
+}
+
+<mat-card class="cardWithShadow recibo" [class.recibo--anulado]="anulado()">
+  <mat-card-content class="recibo-body">
+    <header class="rc-head">
+      <img class="rc-logo" [src]="branding.logoUrl()" (error)="branding.markFailed()" alt="Logo de la empresa" />
+      <div class="rc-title">
+        <span class="rc-kind">Recibo</span>
+        <span class="rc-number">N.º {{ numeroRecibo(c.id) }}</span>
+        <span class="muted">{{ c.fecha | date: "d 'de' MMMM 'de' y, HH:mm" }} h</span>
+      </div>
+    </header>
+
+    <div class="rc-amount">
+      <span>Monto recibido</span>
+      <strong>{{ formatGs(c.monto) }}</strong>
+    </div>
+
+    <p class="rc-text">
+      Recibí de <strong>{{ clienteNombre(v) }}</strong>@if (v.cliente?.ciRuc) { (CI/RUC {{ v.cliente?.ciRuc }})}
+      la suma de <strong>guaraníes {{ montoEnLetras() }}</strong>, en concepto de pago
+      {{ saldoDespues() === 0 ? 'total' : 'parcial' }} de la <strong>Factura N.º {{ numeroFactura(v.id) }}</strong>
+      a crédito del {{ v.fecha | date: 'd/MM/y' }}.
+    </p>
+
+    <dl class="rc-grid">
+      <div>
+        <dt>Forma de pago</dt>
+        <dd>{{ formaPagoLabel(c.formaPago) }}@if (c.referencia) { · {{ c.referencia }} }</dd>
+      </div>
+      <div>
+        <dt>Total de la factura</dt>
+        <dd>{{ formatGs(v.totalFactura) }}</dd>
+      </div>
+      <div>
+        <dt>Saldo anterior</dt>
+        <dd>{{ formatGs(saldoAnterior()) }}</dd>
+      </div>
+      <div>
+        <dt>Este pago</dt>
+        <dd>− {{ formatGs(c.monto) }}</dd>
+      </div>
+      <div class="rc-saldo" [class.rc-saldo--pagada]="saldoDespues() === 0">
+        <dt>{{ saldoDespues() === 0 ? 'Factura' : 'Saldo pendiente' }}</dt>
+        <dd>{{ saldoDespues() === 0 ? 'Pagada' : formatGs(saldoDespues()) }}</dd>
+      </div>
+    </dl>
+
+    <footer class="rc-sign">
+      <div class="rc-line"></div>
+      <span>Recibido por {{ c.usuarioNombre }}</span>
+    </footer>
+
+    @if (anulado()) {
+    <div class="watermark" aria-hidden="true">ANULADO</div>
+    }
+  </mat-card-content>
+</mat-card>
+} } }

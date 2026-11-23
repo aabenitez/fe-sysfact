@@ -1,0 +1,312 @@
+<!-- Header -->
+<div class="page-head">
+  <div>
+    <h1>Caja</h1>
+    <p>
+      Lo que entró el {{ fechaLocal(fecha()) | date: "EEEE d 'de' MMMM 'de' y" }}: ventas al contado y cobros de
+      facturas a crédito.
+    </p>
+  </div>
+  <div class="head-actions no-print">
+    @if (esAdmin()) {
+    <div class="day-nav" role="group" aria-label="Elegir el día">
+      <button mat-icon-button (click)="diaAnterior()" aria-label="Día anterior" [disabled]="loading()">
+        <i class="iconify icon-20" data-icon="solar:alt-arrow-left-linear"></i>
+      </button>
+      <input
+        type="date"
+        class="day-input"
+        [value]="fecha()"
+        [max]="hoy"
+        (change)="cambiarFecha($any($event.target).value)"
+        aria-label="Día de la caja"
+      />
+      <button mat-icon-button (click)="diaSiguiente()" aria-label="Día siguiente" [disabled]="loading() || esHoy()">
+        <i class="iconify icon-20" data-icon="solar:alt-arrow-right-linear"></i>
+      </button>
+      @if (!esHoy()) {
+      <button mat-button color="primary" (click)="cambiarFecha(hoy)">Hoy</button>
+      }
+    </div>
+    }
+    <button mat-stroked-button color="primary" (click)="cargar()" [disabled]="loading()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:refresh-line-duotone"></i>
+      Actualizar
+    </button>
+    <button mat-flat-button color="primary" (click)="imprimir()" [disabled]="!resumen()">
+      <i class="iconify icon-18 m-r-6" data-icon="solar:printer-minimalistic-line-duotone"></i>
+      Imprimir
+    </button>
+  </div>
+</div>
+
+@if (aviso()) {
+<div class="aviso no-print" role="status">
+  <i class="iconify" data-icon="solar:check-circle-line-duotone"></i>
+  <span>{{ aviso() }}</span>
+  <button mat-icon-button (click)="aviso.set(null)" aria-label="Cerrar aviso"><mat-icon>close</mat-icon></button>
+</div>
+}
+
+@if (loading()) {
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-24">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    @for (i of [1, 2, 3]; track i) {
+    <div class="skeleton-row"></div>
+    }
+  </mat-card-content>
+</mat-card>
+} @else if (error()) {
+<mat-card class="cardWithShadow">
+  <mat-card-content class="state">
+    <i class="iconify state-icon state-icon--error" data-icon="solar:danger-triangle-line-duotone"></i>
+    <h3>{{ error() }}</h3>
+    <div class="state-actions">
+      @if (!esHoy()) {
+      <button mat-stroked-button (click)="cambiarFecha(hoy)">Ver la caja de hoy</button>
+      }
+      <button mat-flat-button color="primary" (click)="cargar()">Reintentar</button>
+    </div>
+  </mat-card-content>
+</mat-card>
+} @else { @if (resumen(); as r) {
+
+<!-- Summary -->
+<div class="stats">
+  <div class="stat stat--main">
+    <span class="stat-icon"><i class="iconify" data-icon="solar:safe-square-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ formatGs(r.total) }}</div>
+      <div class="stat-label">Entró en total</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--green"><i class="iconify" data-icon="solar:wad-of-money-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ formatGs(r.efectivo) }}</div>
+      <div class="stat-label">En efectivo</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--blue"><i class="iconify" data-icon="solar:cart-large-2-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ formatGs(r.totalVentas) }}</div>
+      <div class="stat-label">{{ ventas().length }} {{ ventas().length === 1 ? 'venta' : 'ventas' }} al contado</div>
+    </div>
+  </div>
+  <div class="stat">
+    <span class="stat-icon stat-icon--amber"><i class="iconify" data-icon="solar:wallet-money-line-duotone"></i></span>
+    <div>
+      <div class="stat-value">{{ formatGs(r.totalCobros) }}</div>
+      <div class="stat-label">{{ cobros().length }} {{ cobros().length === 1 ? 'cobro' : 'cobros' }} de crédito</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="col-main">
+    <!-- By payment method -->
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <h2 class="card-title">
+          <i class="iconify" data-icon="solar:pie-chart-2-line-duotone"></i>
+          Por forma de pago
+        </h2>
+        <table class="formas-table">
+          <thead>
+            <tr>
+              <th>Forma de pago</th>
+              <th class="num">Ventas</th>
+              <th class="num">Cobros</th>
+              <th class="num">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of formas(); track f.formaPago) {
+            <tr [class.efectivo]="f.formaPago === 'EFECTIVO'">
+              <td>
+                <span class="forma-cell">
+                  <i class="iconify" [attr.data-icon]="formaPagoIcon(f.formaPago)"></i>
+                  {{ formaPagoLabel(f.formaPago) }}
+                  <span class="muted small">· {{ f.cantidad }}</span>
+                </span>
+              </td>
+              <td class="num">{{ formatGs(f.ventas) }}</td>
+              <td class="num">{{ formatGs(f.cobros) }}</td>
+              <td class="num strong">{{ formatGs(f.total) }}</td>
+            </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td class="num">{{ formatGs(r.totalVentas) }}</td>
+              <td class="num">{{ formatGs(r.totalCobros) }}</td>
+              <td class="num">{{ formatGs(r.total) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Movements -->
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <h2 class="card-title">
+          <i class="iconify" data-icon="solar:list-check-line-duotone"></i>
+          Movimientos
+          <span class="muted small">{{ r.movimientos.length }}</span>
+        </h2>
+        @if (r.movimientos.length === 0) {
+        <div class="empty">
+          <i class="iconify" data-icon="solar:inbox-line-line-duotone"></i>
+          <span>No entró dinero este día: no hay ventas al contado ni cobros.</span>
+        </div>
+        } @else {
+        <ul class="movs">
+          @for (m of r.movimientos; track trackMov(m)) {
+          <li class="mov">
+            <span class="mov-time">{{ m.fecha | date: 'HH:mm' }}</span>
+            <span class="mov-icon" [class.mov-icon--cobro]="m.tipo === 'COBRO'">
+              <i class="iconify" [attr.data-icon]="m.tipo === 'VENTA' ? 'solar:cart-large-2-line-duotone' : 'solar:wallet-money-line-duotone'"></i>
+            </span>
+            <div class="mov-main">
+              <div class="mov-title">
+                @if (m.tipo === 'VENTA') {
+                Venta al contado ·
+                <a [routerLink]="['/ventas', m.ventaId]">Factura N.º {{ numeroFactura(m.ventaId) }}</a>
+                } @else {
+                <a [routerLink]="['/ventas', m.ventaId, 'cobros', m.id, 'recibo']">Recibo N.º {{ numeroRecibo(m.id) }}</a>
+                · cobro de la
+                <a [routerLink]="['/ventas', m.ventaId]">factura N.º {{ numeroFactura(m.ventaId) }}</a>
+                }
+              </div>
+              <div class="muted small">
+                {{ m.cliente || 'Sin cliente' }} · {{ formaPagoLabel(m.formaPago) }}@if (m.referencia) { ({{ m.referencia }})}@if (m.usuarioNombre) { · {{ m.usuarioNombre }}}
+              </div>
+            </div>
+            <strong class="mov-amount">{{ formatGs(m.monto) }}</strong>
+          </li>
+          }
+        </ul>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Closing -->
+  <div class="col-side">
+    <mat-card class="cardWithShadow cierre-card" [class.cierre-card--cerrada]="!!cierre()">
+      <mat-card-content class="p-24">
+        @if (cierre(); as c) {
+        <h2 class="card-title">
+          <i class="iconify ok" data-icon="solar:lock-keyhole-minimalistic-line-duotone"></i>
+          Caja cerrada
+        </h2>
+        <p class="muted small cierre-quien">
+          Por {{ c.usuarioNombre }} el {{ c.creado | date: "d/MM/y 'a las' HH:mm" }}.
+        </p>
+        <dl class="cierre-grid">
+          <div><dt>Fondo inicial</dt><dd>{{ formatGs(c.fondoInicial) }}</dd></div>
+          <div><dt>Efectivo del día</dt><dd>{{ formatGs(c.efectivoEsperado - c.fondoInicial) }}</dd></div>
+          <div class="sep"><dt>Efectivo esperado</dt><dd>{{ formatGs(c.efectivoEsperado) }}</dd></div>
+          <div><dt>Efectivo contado</dt><dd>{{ formatGs(c.efectivoContado) }}</dd></div>
+        </dl>
+        <div class="dif" [class.dif--ok]="c.diferencia === 0" [class.dif--falta]="c.diferencia < 0" [class.dif--sobra]="c.diferencia > 0">
+          {{ textoDiferencia(c.diferencia) }}
+        </div>
+        @if (c.observacion) {
+        <p class="obs"><span class="muted">Observación:</span> {{ c.observacion }}</p>
+        }
+        @if (cambiosDespues()) {
+        <div class="warn" role="note">
+          <i class="iconify" data-icon="solar:danger-triangle-line-duotone"></i>
+          <span>{{ cambiosDespues() }}</span>
+        </div>
+        }
+        @if (esAdmin()) {
+        <button mat-stroked-button color="warn" class="full-btn no-print" (click)="anularCierre(c)">
+          <i class="iconify icon-18 m-r-6" data-icon="solar:lock-keyhole-unlocked-line-duotone"></i>
+          Anular cierre
+        </button>
+        }
+        } @else {
+        <h2 class="card-title">
+          <i class="iconify" data-icon="solar:calculator-minimalistic-line-duotone"></i>
+          Cerrar la caja
+        </h2>
+        <p class="muted small">Contá el efectivo del cajón y anotalo. El sistema lo compara con lo que tendría que haber.</p>
+
+        <form class="cierre-form no-print" (ngSubmit)="cerrar()">
+          <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
+            <mat-label>Fondo inicial (Gs.)</mat-label>
+            <input matInput type="number" name="fondo" min="0" step="1000" inputmode="numeric" [ngModel]="fondo()" (ngModelChange)="fondo.set($event)" />
+            <mat-hint>El cambio con que se abrió la caja.</mat-hint>
+          </mat-form-field>
+
+          <div class="esperado">
+            <div><span>Fondo inicial</span><span>{{ formatGs(fondo() ?? 0) }}</span></div>
+            <div><span>+ Efectivo del día</span><span>{{ formatGs(r.efectivo) }}</span></div>
+            <div class="esperado-total"><span>Efectivo esperado</span><strong>{{ formatGs(esperado()) }}</strong></div>
+          </div>
+
+          <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
+            <mat-label>Efectivo contado (Gs.)</mat-label>
+            <input matInput type="number" name="contado" min="0" step="1000" inputmode="numeric" required [ngModel]="contado()" (ngModelChange)="contado.set($event)" />
+            <button mat-button matSuffix type="button" class="suffix-btn" (click)="usarEsperado()">Coincide</button>
+          </mat-form-field>
+
+          @if (diferencia() !== null) {
+          <div class="dif" [class.dif--ok]="diferencia() === 0" [class.dif--falta]="diferencia()! < 0" [class.dif--sobra]="diferencia()! > 0" aria-live="polite">
+            {{ textoDiferencia(diferencia()!) }}
+          </div>
+          }
+
+          <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
+            <mat-label>Observación{{ diferencia() !== null && diferencia() !== 0 ? '' : ' (opcional)' }}</mat-label>
+            <textarea matInput name="observacion" rows="2" [maxlength]="obsMax" [ngModel]="observacion()" (ngModelChange)="observacion.set($event)" placeholder="Ej.: se dio mal un vuelto"></textarea>
+            <mat-hint align="end">{{ observacion().length }} / {{ obsMax }}</mat-hint>
+          </mat-form-field>
+
+          @if (intento() && problemaCierre()) {
+          <div class="alert" role="alert">{{ problemaCierre() }}</div>
+          }
+          @if (errorCierre()) {
+          <div class="alert" role="alert">{{ errorCierre() }}</div>
+          }
+
+          <button mat-flat-button color="primary" type="submit" class="full-btn" [disabled]="guardando()">
+            @if (guardando()) {
+            <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+            }
+            <i class="iconify icon-18 m-r-6" data-icon="solar:lock-keyhole-minimalistic-line-duotone"></i>
+            Cerrar caja
+          </button>
+        </form>
+        <p class="print-only muted">Caja sin cerrar.</p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    @if (r.cierresAnulados.length > 0) {
+    <mat-card class="cardWithShadow no-print">
+      <mat-card-content class="p-24">
+        <h2 class="card-title card-title--small">Cierres anulados</h2>
+        <ul class="anulados">
+          @for (a of r.cierresAnulados; track a.id) {
+          <li>
+            <div><strong>Contado {{ formatGs(a.efectivoContado) }}</strong> · {{ diferenciaEnFrase(a.diferencia) }}</div>
+            <div class="muted small">
+              Cerrado por {{ a.usuarioNombre }} el {{ a.creado | date: 'd/MM HH:mm' }}; anulado por {{ a.anulacionUsuarioNombre }}
+              el {{ a.anulacionFecha | date: 'd/MM HH:mm' }}. Motivo: {{ a.anulacionMotivo }}
+            </div>
+          </li>
+          }
+        </ul>
+      </mat-card-content>
+    </mat-card>
+    }
+  </div>
+</div>
+} }

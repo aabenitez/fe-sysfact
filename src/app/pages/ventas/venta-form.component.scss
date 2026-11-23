@@ -116,6 +116,56 @@ $danger: #b42318;
   }
 }
 
+.hint--credito {
+  margin: 14px 0 0;
+}
+
+.forma-pago {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 14px;
+
+  .label {
+    font-size: 14px;
+    font-weight: 600;
+    color: $ink;
+  }
+}
+.formas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.forma {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid #e0e6eb;
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  color: #344054;
+  cursor: pointer;
+
+  &:hover {
+    background: #f5f6ff;
+  }
+  &:focus-visible {
+    outline: 2px solid #635bff;
+    outline-offset: 2px;
+  }
+}
+.forma--on {
+  border-color: #635bff;
+  background: rgba(99, 91, 255, 0.1);
+  color: #4b44d6;
+  font-weight: 600;
+}
+
 .field-icon {
   font-size: 18px;
   margin: 0 6px 0 10px;

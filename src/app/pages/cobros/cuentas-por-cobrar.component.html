@@ -14,7 +14,13 @@
 <div class="aviso" role="status">
   <i class="iconify" data-icon="solar:check-circle-line-duotone"></i>
   <span>{{ aviso() }}</span>
-  <button mat-icon-button (click)="aviso.set(null)" aria-label="Cerrar aviso"><mat-icon>close</mat-icon></button>
+  @if (avisoRecibo(); as r) {
+  <a mat-stroked-button color="primary" class="aviso-btn" [routerLink]="['/ventas', r.ventaId, 'cobros', r.cobroId, 'recibo']" [queryParams]="{ imprimir: 1 }">
+    <i class="iconify icon-18 m-r-6" data-icon="solar:printer-minimalistic-line-duotone"></i>
+    Imprimir recibo
+  </a>
+  }
+  <button mat-icon-button (click)="aviso.set(null); avisoRecibo.set(null)" aria-label="Cerrar aviso"><mat-icon>close</mat-icon></button>
 </div>
 }
 

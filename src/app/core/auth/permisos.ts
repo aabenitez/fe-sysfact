@@ -16,6 +16,8 @@ export const ROLES_CATALOGO = [ROL_ADMIN, ROL_CARGADOR];
 export const ROLES_INGRESO_STOCK = [ROL_ADMIN, ROL_CARGADOR];
 /** Accounts receivable: see what is owed and register payments of credit sales. */
 export const ROLES_COBROS = [ROL_ADMIN, ROL_CAJERO];
+/** Daily cash count and closing (a cashier only today's; the Administrador any day). */
+export const ROLES_CAJA = [ROL_ADMIN, ROL_CAJERO];
 
 export function puedeVender(rol: string): boolean {
   return ROLES_VENTAS.includes(rol);

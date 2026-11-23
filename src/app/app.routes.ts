@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
 import { adminGuard, authGuard, rolGuard } from './core/auth/auth.guard';
-import { ROLES_CATALOGO, ROLES_COBROS, ROLES_VENTAS } from './core/auth/permisos';
+import { ROLES_CAJA, ROLES_CATALOGO, ROLES_COBROS, ROLES_VENTAS } from './core/auth/permisos';
 
 export const routes: Routes = [
   {
@@ -42,6 +42,11 @@ export const routes: Routes = [
           import('./pages/ventas/venta-form.component').then((m) => m.VentaFormComponent),
       },
       {
+        path: 'ventas/:id/cobros/:cobroId/recibo',
+        title: 'Recibo · Sysfact',
+        loadComponent: () => import('./pages/cobros/recibo.component').then((m) => m.ReciboComponent),
+      },
+      {
         path: 'ventas/:id',
         title: 'Factura · Sysfact',
         loadComponent: () =>
@@ -53,6 +58,12 @@ export const routes: Routes = [
         canActivate: [rolGuard(...ROLES_COBROS)],
         loadComponent: () =>
           import('./pages/cobros/cuentas-por-cobrar.component').then((m) => m.CuentasPorCobrarComponent),
+      },
+      {
+        path: 'caja',
+        title: 'Caja · Sysfact',
+        canActivate: [rolGuard(...ROLES_CAJA)],
+        loadComponent: () => import('./pages/caja/caja.component').then((m) => m.CajaComponent),
       },
       {
         path: 'clientes',

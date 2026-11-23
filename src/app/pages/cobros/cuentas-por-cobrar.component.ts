@@ -39,6 +39,8 @@ export class CuentasPorCobrarComponent implements OnInit {
   readonly error = signal(false);
   readonly cuentas = signal<CuentaPorCobrar[]>([]);
   readonly aviso = signal<string | null>(null);
+  /** Sale and payment just registered, to offer printing its receipt from the notice. */
+  readonly avisoRecibo = signal<{ ventaId: number; cobroId: number } | null>(null);
 
   readonly texto = signal('');
   readonly soloVencidas = signal(false);
@@ -120,6 +122,7 @@ export class CuentasPorCobrarComponent implements OnInit {
       .subscribe((cobro) => {
         if (!cobro) return;
         const quedo = c.saldo - cobro.monto;
+        this.avisoRecibo.set({ ventaId: c.ventaId, cobroId: cobro.id });
         this.aviso.set(
           `Se registró el cobro de ${formatGs(cobro.monto)} de la factura N.º ${numeroFactura(c.ventaId)}. ` +
             (quedo <= 0 ? 'La factura quedó pagada.' : `Queda debiendo ${formatGs(quedo)}.`)

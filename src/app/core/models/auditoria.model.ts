@@ -1,5 +1,5 @@
 export type AccionAuditoria = 'CREAR' | 'EDITAR' | 'ANULAR' | 'ELIMINAR' | 'INGRESO' | 'AJUSTE';
-export type EntidadAuditoria = 'VENTA' | 'CLIENTE' | 'UNIDAD_MEDIDA' | 'STOCK' | 'COBRO';
+export type EntidadAuditoria = 'VENTA' | 'CLIENTE' | 'UNIDAD_MEDIDA' | 'STOCK' | 'COBRO' | 'CAJA';
 
 /** One audit log entry (GET /auditoria, GET /ventas/{id}/historial). */
 export interface Auditoria {
@@ -32,6 +32,7 @@ export const ENTIDADES: { value: EntidadAuditoria; label: string }[] = [
   { value: 'UNIDAD_MEDIDA', label: 'Unidades de medida' },
   { value: 'STOCK', label: 'Stock' },
   { value: 'COBRO', label: 'Cobros' },
+  { value: 'CAJA', label: 'Cierres de caja' },
 ];
 
 export function accionLabel(a: string): string {

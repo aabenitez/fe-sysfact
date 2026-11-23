@@ -1,0 +1,275 @@
+$primary: #635bff;
+$ink: #111c2d;
+$muted: #707a82;
+$border: #e0e6eb;
+
+:host {
+  display: block;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.muted {
+  color: $muted;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .back {
+    color: $muted;
+  }
+  button {
+    border-radius: 10px !important;
+  }
+}
+
+.anulado-banner {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid #fecdca;
+  border-radius: 12px;
+  background: #fef3f2;
+  color: #b42318;
+
+  .iconify {
+    font-size: 22px;
+    flex: 0 0 auto;
+  }
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+/* ---------------- Receipt ---------------- */
+.recibo {
+  position: relative;
+  overflow: hidden;
+}
+.recibo-body {
+  padding: 32px 36px !important;
+}
+
+.rc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid $border;
+}
+.rc-logo {
+  display: block;
+  max-width: 220px;
+  max-height: 64px;
+  object-fit: contain;
+  object-position: left center;
+}
+.rc-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+}
+.rc-kind {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: $muted;
+}
+.rc-number {
+  font-size: 24px;
+  font-weight: 800;
+  color: $ink;
+}
+
+.rc-amount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 24px 0 18px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(99, 91, 255, 0.08);
+  color: #4b44d6;
+
+  span {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  strong {
+    font-size: 26px;
+    font-weight: 800;
+  }
+}
+
+.rc-text {
+  margin: 0 0 22px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: $ink;
+}
+
+.rc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid $border;
+  border-radius: 12px;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
+  dt {
+    color: $muted;
+    font-size: 13px;
+  }
+  dd {
+    margin: 0;
+    font-weight: 600;
+    color: $ink;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+}
+.rc-saldo {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px dashed $border;
+
+  dt,
+  dd {
+    font-size: 15px;
+    font-weight: 800;
+    color: #b54708;
+  }
+}
+.rc-saldo--pagada {
+  dt,
+  dd {
+    color: #067647;
+  }
+}
+
+.rc-sign {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 260px;
+  max-width: 100%;
+  margin: 56px 0 0 auto;
+  font-size: 13px;
+  color: $muted;
+  text-align: center;
+}
+.rc-line {
+  width: 100%;
+  border-top: 1px solid $ink;
+}
+
+.watermark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 96px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: rgba(180, 35, 24, 0.12);
+  transform: rotate(-20deg);
+  pointer-events: none;
+}
+
+.state {
+  padding: 48px 16px !important;
+  text-align: center;
+
+  h3 {
+    margin: 12px 0 16px;
+    font-size: 17px;
+    font-weight: 700;
+    color: $ink;
+  }
+}
+.state-icon {
+  font-size: 44px;
+  color: $muted;
+}
+
+@media (max-width: 575px) {
+  .recibo-body {
+    padding: 20px 18px !important;
+  }
+  .rc-title {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .rc-grid {
+    grid-template-columns: 1fr;
+  }
+  .rc-sign {
+    margin: 40px auto 0;
+  }
+  .watermark {
+    font-size: 56px;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  :host {
+    max-width: none;
+  }
+  .recibo {
+    box-shadow: none !important;
+    border: 1px solid $border;
+  }
+  .rc-amount {
+    background: none;
+    border: 2px solid $ink;
+    color: $ink;
+  }
+  .watermark {
+    color: rgba(180, 35, 24, 0.18);
+  }
+  // Hide the app shell (sidebar, top bar) around the page.
+  ::ng-deep {
+    .sidebarNav,
+    mat-toolbar.topbar,
+    app-header {
+      display: none !important;
+    }
+    .mat-drawer-content,
+    .mat-sidenav-content {
+      margin-left: 0 !important;
+    }
+    .page-wrapper,
+    .body-wrapper {
+      padding: 0 !important;
+      margin: 0 !important;
+      background: #fff !important;
+    }
+  }
+}

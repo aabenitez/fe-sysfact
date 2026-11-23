@@ -1,5 +1,6 @@
 import { Cliente } from './cliente.model';
 import { Articulo } from './articulo.model';
+import { FormaPago } from './cobro.model';
 
 export type CondicionVenta = 'CON' | 'CRE';
 export type EstadoVenta = 'EMITIDA' | 'ANULADA';
@@ -27,6 +28,8 @@ export interface DetalleVenta {
 export interface Venta {
   id: number;
   condicionVenta: CondicionVenta;
+  /** How a cash sale was paid; null for credit sales (paid later through payments). */
+  formaPago?: FormaPago | null;
   fecha: string;
   totalExenta: number;
   totalIva5: number;
@@ -52,6 +55,8 @@ export interface Venta {
 /** Body for POST /ventas and PUT /ventas/{id}. IVA and totals are computed by the backend. */
 export interface VentaInput {
   condicionVenta: CondicionVenta;
+  /** Cash sales only. */
+  formaPago: FormaPago | null;
   cliente: { id: number } | null;
   detallesVenta: {
     articulo: { id: number };

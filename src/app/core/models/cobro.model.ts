@@ -49,6 +49,11 @@ export const FORMAS_PAGO: { value: FormaPago; label: string; icon: string }[] = 
   { value: 'OTRO', label: 'Otro', icon: 'solar:menu-dots-circle-line-duotone' },
 ];
 
+/** Receipt number of a payment: its id, like invoices (5 → "000005"). */
+export function numeroRecibo(id: number): string {
+  return String(id).padStart(6, '0');
+}
+
 export function formaPagoLabel(f: string): string {
   return FORMAS_PAGO.find((x) => x.value === f)?.label ?? f;
 }
